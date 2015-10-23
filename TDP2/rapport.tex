@@ -1,0 +1,32 @@
+\documentclass{article}
+
+\begin{document}
+gregoire.pichon@inria.fr
+Deadline 5 novembre, minuit
+
+n particules plan 2D
+mémoire limitée par processus
+
+*une masse mi
+*une position vec(pt(Mi)) 
+*une vitesse vec(vt(Mi))
+
+\paragraph{}
+$ F_t(M_i, M_j) = F_t(M_j, M_i) * \overrightarrow{u}_{ij} $
+\paragraph{}
+$ F_t(M_i, M_j) = G \frac{m_i m_j}{(M_i M_j)^2} * \overrightarrow{u}_{ij} $
+\paragraph{}
+uij unitaire dirigé de Mi à Mj
+\paragraph{}
+$ F_t(M_i) = \sum_{i=1}^{n}  F_t(M_i, M_j) i \not= j $
+\paragraph{}
+$ \overrightarrow{a_t(M_i)} = \frac{F_t(M_i)}{m_i} $
+\paragraph{}
+Discrétitation avec un pas de temps dt: 
+$ \overrightarrow{pt+dt}(M_i) = \overrightarrow{pt}(M_i) + \overrightarrow{vt}(M_i)dt + \frac{\overrightarrow{at}(M_i)}{2} * dt^2 $
+\paragraph{}
+vt+dt(Mi)  =vt(Mi) + at(Mi)dt
+
+
+communication Persitante mieux ?
+\end{document}
