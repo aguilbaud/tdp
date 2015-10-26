@@ -2,11 +2,15 @@
 #include <stdlib.h>
 #include "util.h"
 
-#define MAX_MASS 1E10
+#define MAX_MASS 1E4
 #define MIN_MASS 1E3
 #define MAX_XY 1024 //Must be a multiple of 4
 #define MIN_XY 0
 
+
+void print_particle(particle_t p){
+  printf("Mass: %10.f,p.x: %f, p.y %f, p.vx:%f, p.vy:%f\n",p.m, p.p[0], p.p[1], p.v[0], p.v[1]);
+}
 
 particle_t * load_file(char *path, int *n){
   FILE *fp = fopen(path, "r");
@@ -40,11 +44,10 @@ particle_t * init_universe(const int n){
   particle_t * p = malloc(n*sizeof(particle_t));
   
   for (int i = 0; i < n; i++) {
-    p[i] = init_particle(( rand()/(double)MAX_MASS ) * (MAX_MASS-MIN_MASS) + MIN_MASS,
+    p[i] = init_particle(( rand()/(double)RAND_MAX ) * (MAX_MASS-MIN_MASS) + MIN_MASS,
 			 ( rand()/(double)RAND_MAX ) * (MAX_XY-MIN_XY) + MIN_XY,
 			 ( rand()/(double)RAND_MAX ) * (MAX_XY-MIN_XY) + MIN_XY,
-			 ( rand()/(double)RAND_MAX ) * (MAX_XY-MIN_XY) + MIN_XY,
-			 ( rand()/(double)RAND_MAX ) * (MAX_XY-MIN_XY) + MIN_XY);
+			 0, 0);
     
     
   }
