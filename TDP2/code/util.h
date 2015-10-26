@@ -12,7 +12,8 @@ void write_file(char *path, const int n, particle_t * p);
  * in: n
  * out: p
  */
-void init_universe(const int n, particle_t *p);
+particle_t * init_universe(const int n);
 
 
+void write_img(char * path, int n, particle_t * p);
 #endif

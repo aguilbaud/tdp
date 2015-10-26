@@ -21,4 +21,11 @@ double distance(double x1, double y1, double x2, double y2)
   return sqrt((x2-x1)*(x2-x1) + (y2-y1)*(y2-y1));
 }
 
+void move(particle_t *p, const int n){
+
+  for (int i = 0; i < n; i++) {
+    p[i].p[0] += 0.5;
+    p[i].p[1] += 0.5;
+  }
+}
 
