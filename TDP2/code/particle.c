@@ -29,8 +29,9 @@ void forces(particle_t *p, const int n){
 	double intens = intensity(p[i], p[j]);
 	double norme = distance(p[i].p[0], p[i].p[1], p[j].p[0], p[j].p[1]);
 	
-	f_x += intens *  (p[j].p[0] - p[i].p[0]) / norme;
-	f_y += intens *  (p[j].p[1] - p[i].p[1]) / norme;	
+	f_x += (intens *  (p[j].p[0] - p[i].p[0]) / norme);
+	f_y += (intens *  (p[j].p[1] - p[i].p[1]) / norme);
+	
       }
 
     }
@@ -42,30 +43,23 @@ void forces(particle_t *p, const int n){
   }
 
   //Calcul dt;
-  double dt = 2000;
+  double dt = 800;
   
   acc_id = 0;
   for (int i = 0; i < n; i++) {
-    p[i].v[0] += acc[acc_id] * dt; 
-    p[i].v[1] += acc[acc_id+1] * dt;
+    p[i].v[0] += (acc[acc_id] * dt); 
+    p[i].v[1] += (acc[acc_id+1] * dt);
 
-    p[i].p[0] = p[i].p[0] + p[i].v[0] * dt + (acc[acc_id]/2) *dt *dt;
-    p[i].p[1] = p[i].p[1] + p[i].v[1] * dt + (acc[acc_id+1]/2) *dt *dt;
+    p[i].p[0] = p[i].p[0] + p[i].v[0] * dt + ((acc[acc_id]/2) *dt *dt);
+    p[i].p[1] = p[i].p[1] + p[i].v[1] * dt + ((acc[acc_id+1]/2) *dt *dt);
 
-    print_particle(p[i]);
-    
     acc_id+=2;
-    
   }
   free(acc);
 }
 
 void move(particle_t *p, const int n){
-  
+  //print_particle(p[1]);
   forces(p,n);
-  /* for (int i = 0; i < n; i++) { */
-  /*   p[i].p[0] += 0.5; */
-  /*   p[i].p[1] += 0.5; */
-  /* } */
 }
 

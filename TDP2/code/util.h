@@ -7,8 +7,8 @@ void print_particle(particle_t p);
 /*
  * out: n
  */
-particle_t * load_file(char *path, int *n);
-void write_file(char *path, const int n, particle_t * p);
+particle_t * load_file(FILE * f, int *n);
+void write_file(FILE * f, const int n, particle_t * p);
 
 /* Génére n particules aléatoires 
  * in: n
