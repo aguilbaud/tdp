@@ -20,26 +20,23 @@ int main(int argc, char *argv[])
    *mise a jour en fonction de dt: p,v,a
    */
   int nb_iter = 20;
+  int nb_particle = 50;
 
 
-  int nflag = 0;
-  int bflag = 0;
   char *cvalue = NULL;
-  int index;
   int c;
 
   opterr = 0;
 
-  while ((c = getopt (argc, argv, "bn:")) != -1)
+  while ((c = getopt (argc, argv, "i:n:")) != -1)
     switch (c)
       {
-      case 'b':
-        bflag = 1;
-        break;
       case 'n':
+	nb_particle = atoi(cvalue);
+        break;
+      case 'i':
 	cvalue = optarg;
 	nb_iter = atoi(cvalue);
-	printf("%d\n",nb_iter);
 	break;
       case '?':
 	if (optopt == 'c')

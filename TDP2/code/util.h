@@ -2,6 +2,8 @@
 #define _UTIL_H
 #include "particle.h"
 
+
+void print_particle(particle_t p);
 /*
  * out: n
  */
