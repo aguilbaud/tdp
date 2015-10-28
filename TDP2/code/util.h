@@ -18,4 +18,5 @@ particle_t * init_universe(const int n);
 
 
 void write_img(char * path, int n, particle_t * p);
+void write_img_1bpp(char * path, int n, particle_t * p);
 #endif

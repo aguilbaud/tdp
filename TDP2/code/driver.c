@@ -26,7 +26,6 @@ int main(int argc, char *argv[])
    */
   int nb_iter = 20;
   int nb_particle = 50;
-  float image_rate = 0.001;//in percentage
   int n;
   FILE *fp = NULL;
 
@@ -109,8 +108,7 @@ int main(int argc, char *argv[])
     for(int i = 0; i< nb_iter; i++){
      
          
-      /* if(i%(nb_iter/10) == 1){ */
-      if(i == 0){
+      if(i%(nb_iter/100) == 1){
 	char dest[25] ;
 	sprintf(dest,"output/test%2.2d.bmp", num_img);
 	write_img_1bpp(dest, n  , p);

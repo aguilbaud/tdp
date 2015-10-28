@@ -1,5 +1,6 @@
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 #include "util.h"
 
 #define MAX_V 3E-4
@@ -119,8 +120,9 @@ void write_img(char * path, int n, particle_t * p){
 
 /* TODO: Faire tout ce bouzin dans un buffer */
 void write_img_1bpp(char * path, int n, particle_t * p){
-  FILE *fp = fopen(path, "w+");
-  int offset = 14 + 40 +8  ;
+
+  
+  int offset = 14 + 40 + 8;
   int header_size = 40;
   int img_width = IMG_SIZE;
   int img_height = IMG_SIZE;
@@ -132,43 +134,42 @@ void write_img_1bpp(char * path, int n, particle_t * p){
   char blanc = 0x00;
   char noir = 0xff;
 
+
+  char * img_array = calloc(size,1);
+  int array_cpt = 2;
   /*HEADER*/
-  fwrite("BM", 1, 2, fp);
-  fwrite(&size, 1, 4, fp);
-  fwrite("\0\0\0\0", 1, 4, fp);
-  fwrite(&offset,1,4,fp);//offset
+  img_array[0]='B';
+  img_array[1]='M';
+  memcpy(img_array+array_cpt, &size, 4);array_cpt+=4;
+  memcpy(img_array+array_cpt, "\0\0\0\0", 4);array_cpt+=4;
+  memcpy(img_array+array_cpt, &offset, 4);array_cpt+=4;
 
-  /*INFO HEADER*/
-  fwrite(&header_size, 1, 4, fp); 
-  fwrite(&img_width, 1, 4, fp);
-  fwrite(&img_height, 1, 4, fp);
-  fwrite(&nb_planes, 1, 2, fp);
-  fwrite(&bpp, 1, 2, fp);
-  fwrite(&compression, 1, 4, fp);
-  fwrite("\0\0\0\0", 1, 4, fp);
-  fwrite("\0\0\0\0\0\0\0\0", 1, 8, fp);
-  fwrite ("\0\0\0\0", 1, 4, fp);
-  fwrite ("\0\0\0\0", 1, 4, fp);
+  /* /\*INFO HEADER*\/ */
+  memcpy(img_array+array_cpt, &header_size, 4);array_cpt+=4;
+  memcpy(img_array+array_cpt, &img_width, 4);array_cpt+=4;
+  memcpy(img_array+array_cpt, &img_height, 4);array_cpt+=4;
+  memcpy(img_array+array_cpt, &nb_planes, 2);array_cpt+=2;
+  memcpy(img_array+array_cpt, &bpp, 2);array_cpt+=2;
+  memcpy(img_array+array_cpt, &compression, 4);array_cpt+=4;
+  memcpy(img_array+array_cpt, "\0\0\0\0", 4);array_cpt+=4;
+  memcpy(img_array+array_cpt, "\0\0\0\0", 4);array_cpt+=4;
+  memcpy(img_array+array_cpt, "\0\0\0\0", 4);array_cpt+=4;
+  memcpy(img_array+array_cpt, "\0\0\0\0", 4);array_cpt+=4;
+  memcpy(img_array+array_cpt, "\0\0\0\0", 4);array_cpt+=4;
 
-  /*PALETTE*/
-  fwrite(&noir,1,1,fp);
-  fwrite(&noir,1,1,fp);
-  fwrite(&noir,1,1,fp);
-  fwrite(&noir,1,1,fp);
+  /* /\*PALETTE*\/ */
+  memcpy(img_array+array_cpt, &blanc, 1);array_cpt+=1;
+  memcpy(img_array+array_cpt, &blanc, 1);array_cpt+=1;
+  memcpy(img_array+array_cpt, &blanc, 1);array_cpt+=1;
+  memcpy(img_array+array_cpt, &noir, 1);array_cpt+=1;
 
-  fwrite(&blanc,1,1,fp);
-  fwrite(&blanc,1,1,fp);
-  fwrite(&blanc,1,1,fp);
-  fwrite(&noir,1,1,fp);
+  memcpy(img_array+array_cpt, &noir, 1);array_cpt+=1;
+  memcpy(img_array+array_cpt, &noir, 1);array_cpt+=1;
+  memcpy(img_array+array_cpt, &noir, 1);array_cpt+=1;
+  memcpy(img_array+array_cpt, &noir, 1);array_cpt+=1;
 
-  /*DATA*/
-  for (int i = 0; i < img_size; i++) {
-    int a = fwrite(&noir,1,1,fp);
-    if(a==0)
-      printf("err");
-  }
-  
-    
+  /* /\*DATA*\/ */
+      
   for (int i = 0; i < n; i++) {
     double ratio = IMG_SIZE  / MAX_XY ;
     
@@ -181,22 +182,16 @@ void write_img_1bpp(char * path, int n, particle_t * p){
       int octet = offset +  ((y) * img_width +(x)) / 8;
       int bit = ((y) * img_width +(x)) % 8;
       printf("px :%d, py: %d, octet:%d, bit:%d\n",x, y, octet, bit);
-      char mask = 0x01 << bit;
-      fseek(fp, octet, SEEK_SET);
-      char val;
-      int a = fread(&val,1,1,fp);
-      
-      printf("%d\n",a);
-      val |= mask;
-      
-
-      fwrite(&val, 1, 1, fp);
-      fflush(fp);
-      
+      char mask = 0x01 << (7 - bit);
+      img_array[octet] |= mask ;
     }
     else{
       printf("Particle is outside of picture.\n");
     }
   }
+  
+  FILE *fp = fopen(path, "w+");
+  fwrite(img_array, 1, size,fp);
+  free(img_array);
   fclose(fp);
 }
