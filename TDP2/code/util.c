@@ -40,16 +40,15 @@ void write_file(FILE * fp, const int n, particle_t * p){
 
 particle_t * init_universe(const int n){
   particle_t * p = malloc(n*sizeof(particle_t));
-
+  
   for (int i = 0; i < n; i++) {
     p[i] = init_particle(( rand()/(double)RAND_MAX ) * (MAX_MASS-MIN_MASS) + MIN_MASS,
 			 ( rand()/(double)RAND_MAX ) * (MAX_XY-MIN_XY) + MIN_XY,
 			 ( rand()/(double)RAND_MAX ) * (MAX_XY-MIN_XY) + MIN_XY,
-			 ( rand()/(double)RAND_MAX ) * (MAX_V-MIN_V) + MIN_V,
-			 ( rand()/(double)RAND_MAX ) * (MAX_V-MIN_V) + MIN_V);
-    //0, 0);
-    
-    
+			 /* ( rand()/(double)RAND_MAX ) * (MAX_V-MIN_V) + MIN_V, */
+			 /* ( rand()/(double)RAND_MAX ) * (MAX_V-MIN_V) + MIN_V); */
+			 0, 0);
+   
   }
   return p;
 }
@@ -177,21 +176,21 @@ void write_img_1bpp(char * path, int n, particle_t * p){
     int y = p[i].p[1];
     if( (x >= 0 && x <MAX_XY) && (y >= 0 && y < MAX_XY)){
       x *= ratio;
-      y *= ratio;
+	y *= ratio;
      
-      int octet = offset +  ((y) * img_width +(x)) / 8;
-      int bit = ((y) * img_width +(x)) % 8;
-      printf("px :%d, py: %d, octet:%d, bit:%d\n",x, y, octet, bit);
-      char mask = 0x01 << (7 - bit);
-      img_array[octet] |= mask ;
+	int octet = offset +  ((y) * img_width +(x)) / 8;
+	int bit = ((y) * img_width +(x)) % 8;
+	printf("px :%d, py: %d, octet:%d, bit:%d\n",x, y, octet, bit);
+	char mask = 0x01 << (7 - bit);
+	img_array[octet] |= mask ;
+      }
+      else{
+	printf("Particle is outside of picture.\n");
+      }
     }
-    else{
-      printf("Particle is outside of picture.\n");
-    }
-  }
   
-  FILE *fp = fopen(path, "w+");
-  fwrite(img_array, 1, size,fp);
-  free(img_array);
-  fclose(fp);
-}
+    FILE *fp = fopen(path, "w+");
+    fwrite(img_array, 1, size,fp);
+    free(img_array);
+    fclose(fp);
+  }
