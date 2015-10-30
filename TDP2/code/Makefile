@@ -6,17 +6,18 @@ MPI = mpicc
 
 all: driver
 
-driver: driver.c particle.o util.o
-	$(MPI) $(CFLAGS) -o driver driver.c particle.o util.o -lm
+driver: driver.c particle.o util.o dt_calc.o
+	$(MPI) $(CFLAGS) -o driver driver.c particle.o util.o dt_calc.o -lm
 
-particle.o: particle.c particle.h
-	$(CC) $(CFLAGS) -c particle.c -lm
+particle.o: particle.c particle.h dt_calc.o
+	$(CC) $(CFLAGS) -c particle.c -lm 
+
+dt_calc.o: dt_calc.c dt_calc.h
+	$(CC) $(CFLAGS) -c dt_calc.c
+
 
 # perf.o: perf/perf.c perf/perf.h
 # 	$(CC) $(CFLAGS) -c perf/perf.c
-
-# dgemm.o: dgemm.c dgemm.h
-# 	$(CC) $(CFLAGS) -c dgemm.c
 
 # ddot.o: ddot.c cblas.h
 # 	$(CC) $(CFLAGS) -c ddot.c
@@ -28,4 +29,5 @@ clean_output:
 	rm output/*
 clean: 
 	rm *.o driver
+
 

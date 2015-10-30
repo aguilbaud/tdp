@@ -10,7 +10,7 @@
 #define NB_ITER 20
 
 void usage(){
-printf("Usage:\n\
+  printf("Usage:\n\
 -i <x>\t\tNombre d'itérations\n\
 -n <x>\t\tNombre de particules\n		\
 -g <file>\tGenerate a random pattern\n		\
@@ -105,29 +105,23 @@ int main(int argc, char *argv[])
       printf("Problem opening file:%s\n",exec_path);
       return EXIT_FAILURE;
     }
-    int num_img = 0;
-    int num_vid = 0;
+    
     particle_t *p = load_file(fp, &n);
+    int rate = (nb_iter<100)?nb_iter:nb_iter/1000;
+    
     for(int i = 0; i< nb_iter; i++){
-     
-         
-      if(i%(nb_iter/100) == 1){
-	char dest[25] ;
-	sprintf(dest,"output/test%4.4d.bmp", num_img);
-	write_img_1bpp(dest, n  , p);
-	num_img++;
+      printf("\rIter: %d/%d", i+1, nb_iter);
+      if((i%rate) == 1){
+	//char dest[25] ;
+	//write_img_1bpp(dest, n  , p);
+	write_plot("output/test.dat", n, p);
       }
-      /* if(num_img == 100){ */
-      /* 	char dest[25];	 */
-      /* 	sprintf(dest,"./generate_video.sh %d", num_vid); */
-      /* 	system(dest); */
-      /* 	num_img = 0; */
-      /* 	num_vid++; */
-      /* } */
       move(p,n);
     }
+    printf("\n");
     fclose(fp);
     free(p);
+    system("./plot.gp;eog foobar.gif");
   }
   return 1000;
 }
