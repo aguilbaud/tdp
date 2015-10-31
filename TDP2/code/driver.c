@@ -121,7 +121,7 @@ int main(int argc, char *argv[])
     printf("\n");
     fclose(fp);
     free(p);
-    system("./plot.gp;eog foobar.gif");
+    //system("./plot.gp;eog foobar.gif");
   }
   return 1000;
 }
