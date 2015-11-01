@@ -1,5 +1,5 @@
 CC = gcc
-CFLAGS = -g -std=gnu99 -Wall
+CFLAGS = -g -std=gnu99 -Wall -O3
 
 MPI = mpicc
 
@@ -15,19 +15,12 @@ particle.o: particle.c particle.h dt_calc.o
 dt_calc.o: dt_calc.c dt_calc.h
 	$(CC) $(CFLAGS) -c dt_calc.c
 
-
-# perf.o: perf/perf.c perf/perf.h
-# 	$(CC) $(CFLAGS) -c perf/perf.c
-
-# ddot.o: ddot.c cblas.h
-# 	$(CC) $(CFLAGS) -c ddot.c
-
 util.o: util.c util.h
 	$(CC) $(CFLAGS) -c util.c
 
 clean_output:
-	rm output/*
+	rm output/* *.gif *.gp *.dat *.png
 clean: 
-	rm *.o driver
+	rm *.o driver output/* *.gif *.gp *.dat 2> /dev/null
 
 

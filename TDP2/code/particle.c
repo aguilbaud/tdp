@@ -34,67 +34,62 @@ void forces(particle_t *p, const int n){
       for (int j = 0; j < n; j++) {
 	if(i!=j && p[j].m!=0.0){
 	  double dist = distance(p[i].p[0], p[i].p[1], p[j].p[0], p[j].p[1]);
-	  //printf("%f \n",dist);
+
 	  if(!CLOSE2(dist,0.0,2E8)){/*ATENTION*/
-	    double intens = intensity(p[i].m, p[j].m, dist);
-	    double vec_unit_x = (p[j].p[0] - p[i].p[0]) / dist;
-	    double vec_unit_y = (p[j].p[1] - p[i].p[1]) / dist;
+	      double intens = intensity(p[i].m, p[j].m, dist);
+	      double vec_unit_x = (p[j].p[0] - p[i].p[0]) / dist;
+	      double vec_unit_y = (p[j].p[1] - p[i].p[1]) / dist;
 	    
-	    f_x += (intens * vec_unit_x);
-	    f_y += (intens * vec_unit_y);
-	    //printf("%f %f\n",f_x, f_y);
-	   
-	    if(dist < min_dist)
-	      min_dist = dist;
+	      f_x += (intens * vec_unit_x);
+	      f_y += (intens * vec_unit_y);
+	    
+	      if(dist < min_dist)
+		  min_dist = dist;
 	  }
 	  else{//fusion
-	    //printf("fusion\n");
-	    p[i].m+=p[j].m;
-	    p[j].m=0.0;
+	      p[i].m+=p[j].m;
+	      p[j].m=0.0;
 	  }
 	}
       } 
+      
+      //acc array contains acceleration vector for each particle
       double a_x = f_x / p[i].m;
       double a_y = f_y / p[i].m;
       acc[acc_id] = a_x;
       acc[acc_id + 1] = a_y;
       acc_id+=2;
-    
-     
-
+      
+      //Polynomial resolution to compute a fittable dt
       double a = sqrt( (a_x * a_x) + (a_y * a_y) ) / 2.0;
       double b = sqrt( (p[i].v[0] * p[i].v[0]) + (p[i].v[1] * p[i].v[1]) );
-      double c = -0.01 * min_dist;
-    
+      double c = -0.01 * min_dist; 
       double dt = polynomial_solver(a,b,c);
+
       if(dt<min_dt)
-	min_dt = dt;
+	  min_dt = dt;
     }
   }
-  //  print_particle(p[1]);
 
-  //Calcul dt;
-  
-  
   double dt = min_dt;
   
   //printf("%40.40f\n", dt);
   //Mise a jour de p,v,a
   acc_id = 0;
   for (int i = 0; i < n; i++) {
-    p[i].v[0] += (acc[acc_id] * dt); 
-    p[i].v[1] += (acc[acc_id+1] * dt);
+      p[i].v[0] += (acc[acc_id] * dt); 
+      p[i].v[1] += (acc[acc_id+1] * dt);
 
-    p[i].p[0] += (p[i].v[0] * dt) + ((acc[acc_id]/2) *dt *dt);
-    p[i].p[1] += (p[i].v[1] * dt) + ((acc[acc_id+1]/2) *dt *dt);
+      p[i].p[0] += (p[i].v[0] * dt) + ((acc[acc_id]/2) *dt *dt);
+      p[i].p[1] += (p[i].v[1] * dt) + ((acc[acc_id+1]/2) *dt *dt);
 
-    acc_id+=2;
+      acc_id+=2;
   }
   free(acc);
 }
 
 void move(particle_t *p, const int n){
-  //print_particle(p[1]);
-  forces(p,n);
+    //print_particle(p[1]);
+    forces(p,n);
 }
 
