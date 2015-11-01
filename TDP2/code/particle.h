@@ -7,15 +7,15 @@
 
 
 typedef struct particle_s{
-  float m;
-  float p[2];
-  float v[2];
+    double m;
+    double p[2];
+    double v[2];
 }particle_t;
 
-particle_t init_particle(float m, float px, float py, float vx, float vy);
+particle_t init_particle(double m, double px, double py, double vx, double vy);
 
 inline double distance(double x1, double y1, double x2, double y2){
-  return sqrt((x2-x1)*(x2-x1) + (y2-y1)*(y2-y1));
+    return sqrt((x2-x1)*(x2-x1) + (y2-y1)*(y2-y1));
 }
 
 inline double intensity(double m1, double m2, double d){

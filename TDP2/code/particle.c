@@ -9,16 +9,16 @@
 extern inline double distance(double x1, double y1, double x2, double y2);
 extern inline double intensity(double m1, double m2, double d);
 
-particle_t init_particle(float m, float px, float py, float vx, float vy){
-  particle_t par;
+particle_t init_particle(double m, double px, double py, double vx, double vy){
+    particle_t par;
   
-  par.m = m;
-  par.p[0] = px;
-  par.p[1] = py;
-  par.v[0] = vx;
-  par.v[1] = vy;
+    par.m = m;
+    par.p[0] = px;
+    par.p[1] = py;
+    par.v[0] = vx;
+    par.v[1] = vy;
   
-  return par;
+    return par;
 }
 
 void forces(particle_t *p, const int n){

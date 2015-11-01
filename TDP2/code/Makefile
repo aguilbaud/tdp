@@ -4,10 +4,13 @@ CFLAGS = -g -std=gnu99 -Wall -O3
 MPI = mpicc
 
 
-all: driver
+all: driver driver_mpi
+
+driver_mpi: driver_mpi.c particle.o util.o dt_calc.o
+	$(MPI) $(CFLAGS) -o driver_mpi driver_mpi.c particle.o util.o dt_calc.o -lm
 
 driver: driver.c particle.o util.o dt_calc.o
-	$(MPI) $(CFLAGS) -o driver driver.c particle.o util.o dt_calc.o -lm
+	$(CC) $(CFLAGS) -o driver driver.c particle.o util.o dt_calc.o -lm
 
 particle.o: particle.c particle.h dt_calc.o
 	$(CC) $(CFLAGS) -c particle.c -lm 
@@ -21,6 +24,6 @@ util.o: util.c util.h
 clean_output:
 	rm output/* *.gif *.gp *.dat *.png
 clean: 
-	rm *.o driver output/* *.gif *.gp *.dat 2> /dev/null
+	rm *.o driver driver_mpi output/* *.gif *.gp *.dat 2> /dev/null
 
 
