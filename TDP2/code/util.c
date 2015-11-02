@@ -137,11 +137,13 @@ void write_img_1bpp(char * path, int n, particle_t * p){
 void write_plot(char * path, int n, particle_t * p){
     FILE *fp = fopen(path, "a+");
     for (int i = 0; i < n; i++) {
-	if(p[i].m!=0.0 
-	   && p[i].p[0] < MAX_XY && p[i].p[0] > MIN_XY 
-	   && p[i].p[1] < MAX_XY && p[i].p[1] > MIN_XY )
-	    fprintf(fp, "%f %f %f\n", p[i].p[0], p[i].p[1], p[i].m);    
+	if(p[i].m!=0.0 )
+	    fprintf(fp, "%f %f %f\n", p[i].p[0], p[i].p[1], p[i].m); 
+	else
+	    fprintf(fp, "\n");
     }
     fprintf(fp, "\n\n");
     fclose(fp);
 }
+
+

@@ -93,7 +93,7 @@ int main_seq(int nb_particle, char *exec_path, int nb_iter, char *output_path, i
     if(output_path != NULL){
 	char d[100];
 	sprintf(d, "./generate_gif.sh gif.dat %s", output_path);
-	system(d);
+	//system(d);
     }
     
     fclose(fp);

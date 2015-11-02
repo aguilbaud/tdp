@@ -22,6 +22,8 @@ inline double intensity(double m1, double m2, double d){
   return G * ((m1 * m2) / (d * d)) ;
 }
 
-void forces(particle_t *p, const int n);
+void forces2(particle_t *p1, const int n1, particle_t *p2, const int n2, double *acc, double *min_dt, int SAME_SET_F);
+void update_pos_vel(particle_t *p, int n, double *acc, int dt);
+void forces(particle_t *p, const int n, double *acc, double *min_dt);
 void move(particle_t *p, const int n);
 #endif
