@@ -28,12 +28,14 @@ function merge(){
     nb_particles=$2
     files=( 'output/outputmpi00.dat' 'output/outputmpi01.dat' 'output/outputmpi02.dat' 'output/outputmpi03.dat' )
     output=output/merged.dat
+    size=$(($nb_particles-1))
     echo -n >  $output
     for ((i=0; i<$nb_iter ; i++));do
 	for file in ${files[@]}; do
 	    beg=$(( (nb_particles*$i) + 1 + ($i * 2)))
-	    echo $i $file $beg $(($beg + $nb_particles))
-	    sed -n "${beg},+${nb_particles}p" $file | tr "\n$" "\ "  >> $output
+	    
+	    #echo $i $file $beg $(($beg + $nb_particles))
+	    sed -n "${beg},+${size}p" $file  >> $output
 	    echo -en "\r" >> $output
 	done
 	echo -en "\n\n" >> $output
@@ -106,11 +108,16 @@ function perf(){
 }
 
 
+#mpi
+merge 10000 5
+generate_gp_gif_script "output/merged.dat" "mpi.gif" "testmpigif.gp"
 
-#merge 2 10
-#generate_gp_gif_script "output/merged.dat" "lol.gif" "testmpigif.gp"
+#seq
+#generate_gp_gif_script "gif.dat" "seq.gif" "testgif.gp"
 
-generate_gp_gif_script gif.dat lol.gif testgif.gp
+#chmod +x *.gp
+
+#rm gif.dat "output/merged.dat"
 # touch $input_data
 # simulation $input_univ $i
 # generate_gp_script $input_data $output_gif $output_plot

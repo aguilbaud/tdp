@@ -6,9 +6,10 @@
 #include <time.h>
 #include <sys/time.h>
 #include <string.h>
+#include <float.h>
 #include "util.h"
 
-#define NB_ITER 2
+#define NB_ITER 10000
 
 void init_mpi_datatype(MPI_Datatype * type, particle_t * p){
     MPI_Datatype types[3] = {MPI_DOUBLE, MPI_DOUBLE, MPI_DOUBLE};
@@ -31,15 +32,25 @@ int main(int argc, char *argv[]){
     MPI_Comm_size(MPI_COMM_WORLD, &size);
     
     int n;
-    char * exec_path = "data/test2.univ";
+    char * exec_path = "data/junk.univ";
     FILE *fp = fopen(exec_path,"r");
     if(fp == NULL){
 	printf("Problem opening file:%s\n",exec_path);
 	MPI_Finalize();
 	return EXIT_FAILURE;
     }
+    
+    char dest[23];
+    sprintf(dest, "output/outputmpi%2.2d.dat", rank);
+    FILE *output_data = fopen(dest,"w+");
+    if(output_data == NULL){
+	printf("Problem opening file:%s\n",dest);
+	MPI_Finalize();
+	return EXIT_FAILURE;
+    }
 
     particle_t *p = load_file(fp, &n);
+    printf("debut n: %d\n", n);
     if(p == NULL){
 	MPI_Finalize();
 	return EXIT_FAILURE;
@@ -61,22 +72,21 @@ int main(int argc, char *argv[]){
     
     double my_dt = 100000;
     
-    particle_t loc_p; 
-    particle_t *buf_p;
-    buf_p = malloc(loc_size*sizeof(particle_t));
-    //memcpy(loc_p, p, loc_size);
-    //memcpy(loc_p, p, loc_size);
-
-    char dest[23];
-    sprintf(dest, "output/outputmpi%2.2d.dat", rank);
+    particle_t *loc_p; 
+    particle_t *comm_p;
+    particle_t *calc_p;
+    comm_p = malloc(loc_size*sizeof(particle_t));
+    loc_p = malloc(loc_size*sizeof(particle_t));
+    calc_p = malloc(loc_size*sizeof(particle_t));
+    memcpy(loc_p, p + p_beg, loc_size*sizeof(particle_t));
+        
+    int rate = NB_ITER/1000;//output gif, if specified, will contain 1000 pictures
     
-    
-    printf("coucou\n");
     MPI_Request req_send, req_recv;
     MPI_Status stat_send, stat_recv;
     for(int i = 0; i < NB_ITER; i++){
 	/*To store the computed acceleration of our particles*/
-	double *acc = malloc(loc_size*2*sizeof(double));
+	double *acc = calloc(loc_size*2,sizeof(double));
 	if(acc == NULL){
 	    fprintf(stderr, "Problem allocating space\n");
 	    free(p);
@@ -84,38 +94,64 @@ int main(int argc, char *argv[]){
 	    return EXIT_FAILURE;
 	}
 	
-	double min_dt;
-	for (int j = 0; j < size; j++) {	        
-	    //Create persistent communication request
-	    MPI_Send_init(p + p_beg, loc_size, MPI_PARTICLE, next, 0, MPI_COMM_WORLD, &req_send);
-	    //Si n/size ne tombe pas juste modifier loc_size
-	    MPI_Recv_init(buf_p, loc_size, MPI_PARTICLE, prev, 0, MPI_COMM_WORLD, &req_recv);
+	double min_dt = DBL_MAX;
+	memcpy(calc_p, loc_p, loc_size*sizeof(particle_t));
+	for (int j = 0; j < size; j++) {
+	    
+	    if(j%2 == 0){
+		MPI_Recv_init(comm_p, loc_size, MPI_PARTICLE, prev, 0, MPI_COMM_WORLD, &req_recv);
+		MPI_Send_init(calc_p, loc_size, MPI_PARTICLE, next, 0, MPI_COMM_WORLD, &req_send);
+		
+		MPI_Start(&req_send);
+		MPI_Start(&req_recv);
 
-	    MPI_Start(&req_send);
-	    MPI_Start(&req_recv);
+		forces2(loc_p, loc_size, calc_p, loc_size, acc, &min_dt, (j==0));
+		if(min_dt < my_dt)
+		    my_dt = min_dt;
+		
+		MPI_Wait(&req_send, &stat_send);
+		MPI_Wait(&req_recv, &stat_recv);
+	    }
+	    else {
+		//Si n/size ne tombe pas juste modifier loc_size
+		MPI_Recv_init(calc_p, loc_size, MPI_PARTICLE, prev, 0, MPI_COMM_WORLD, &req_recv);
+		//Create persistent communication request
+		MPI_Send_init(comm_p, loc_size, MPI_PARTICLE, next, 0, MPI_COMM_WORLD, &req_send);
+		
+		MPI_Start(&req_send);
+		MPI_Start(&req_recv);
 
-	    //Peut etre mettre  += pour la maj de acc
-	    forces2(p + p_beg, loc_size, buf_p, loc_size, acc, &min_dt, (j==rank));
-	    if(min_dt < my_dt)
-		my_dt = min_dt;
+		forces2(loc_p, loc_size, comm_p, loc_size, acc, &min_dt, (j==0));
+		if(min_dt < my_dt)
+		    my_dt = min_dt;
 	
-	    printf("%d -> min_dt = %f\n", rank, min_dt);
+		// printf("%d -> min_dt = %f\n", rank, min_dt);
 	    
 
-	    MPI_Wait(&req_send, &stat_send);
-	    MPI_Wait(&req_recv, &stat_recv);
+		MPI_Wait(&req_send, &stat_send);
+		MPI_Wait(&req_recv, &stat_recv);
+	    }
+	
 	}
-	
-	
 	double global_dt;
-	MPI_Reduce_local(&my_dt, &global_dt, 1, MPI_DOUBLE, MPI_MIN);
-	update_pos_vel(p + p_beg, loc_size, acc, my_dt);
-	write_plot(dest, loc_size, p + p_beg);
+	MPI_Allreduce(&my_dt, &global_dt, 1, MPI_DOUBLE, MPI_MIN, MPI_COMM_WORLD);
+	update_pos_vel(loc_p, loc_size, acc, global_dt);
+	
+	if(rate == 0){
+	    write_plot(output_data, loc_size, loc_p); 
+	}
+	else
+	    if(((i+1)%rate) == 1)
+		write_plot(output_data, loc_size, loc_p); 
+	
 	free(acc);
     }
     
     
     free(p);
+    free(loc_p);
+    free(comm_p);
+    free(calc_p);
     MPI_Finalize();
     return EXIT_SUCCESS;
 }

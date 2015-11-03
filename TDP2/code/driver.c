@@ -13,7 +13,7 @@ void usage(){
     printf("-g <file>\tGenerate a random pattern\n");
     printf("-s <file>\tSequential execution\n");
     printf("-m <file>\tMPI execution\n");
-    printf("-o <file>\tGenerate a representation of the simulation(gif) Don't affect performance\n");
+    printf("-o <file>\tGenerate a file containing the particles positions\n");
     printf("-p\t\tOutput number of particles and time for performance measurment\n");
     printf("\n");
 }
@@ -41,12 +41,18 @@ int main_seq(int nb_particle, char *exec_path, int nb_iter, char *output_path, i
 	return EXIT_FAILURE;
     }
     
+    FILE *output_data = fopen(output_path, "w+");
+    if(output_data == NULL){
+	printf("Problem opening file:%s\n",output_path);
+	return EXIT_FAILURE;
+    }
+
     particle_t *p = load_file(fp, &nb_particle);
     if(p == NULL)
 	return EXIT_FAILURE;
 
     int rate = nb_iter/1000;//output gif, if specified, will contain 1000 pictures
-    
+    printf("%d\n", rate);
     struct timeval start, end;
     double elapsed = 0.0;
        
@@ -58,11 +64,11 @@ int main_seq(int nb_particle, char *exec_path, int nb_iter, char *output_path, i
 	    printf("\rIter: %d/%d", i+1, nb_iter);
 	if(output_path != NULL){
 	    if(rate == 0){
-		write_plot("gif.dat", nb_particle, p); 
+		write_plot(output_data, nb_particle, p); 
 	    }
 	    else
 		if(((i+1)%rate) == 1)
-		    write_plot("gif.dat", nb_particle, p); 
+		    write_plot(output_data, nb_particle, p); 
 	}
 	
 	/* if(output_path != NULL){ */
@@ -96,6 +102,7 @@ int main_seq(int nb_particle, char *exec_path, int nb_iter, char *output_path, i
 	//system(d);
     }
     
+    fclose(output_data);
     fclose(fp);
     free(p);
 

@@ -134,16 +134,16 @@ void write_img_1bpp(char * path, int n, particle_t * p){
 }
 
 
-void write_plot(char * path, int n, particle_t * p){
-    FILE *fp = fopen(path, "a+");
+void write_plot(FILE *fp, int n, particle_t * p){
     for (int i = 0; i < n; i++) {
 	if(p[i].m!=0.0 )
 	    fprintf(fp, "%f %f %f\n", p[i].p[0], p[i].p[1], p[i].m); 
-	else
+	else{
+	    printf("%f\n",p[i].m);
 	    fprintf(fp, "\n");
+	}
     }
     fprintf(fp, "\n\n");
-    fclose(fp);
 }
 
 
