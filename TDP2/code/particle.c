@@ -118,8 +118,8 @@ void forces(particle_t *p, const int n, double *acc, double *min_dt){
 	    //acc array contains acceleration vector for each particle
 	    double a_x = f_x / p[i].m;
 	    double a_y = f_y / p[i].m;
-	    acc[acc_id] = a_x;
-	    acc[acc_id + 1] = a_y;
+	    acc[acc_id] += a_x;
+	    acc[acc_id + 1] += a_y;
 	    acc_id+=2;
       
 	    //Polynomial resolution to compute a fittable dt
@@ -135,10 +135,11 @@ void forces(particle_t *p, const int n, double *acc, double *min_dt){
 }
 
 void move(particle_t *p, const int n){
-    //print_particle(p[1]);
-	double *acc = malloc(2*n*sizeof(double));
-	double dt;
-	forces(p,n,acc, &dt);
+  //print_particle(p[1]);
+  double *acc = calloc(2*n,sizeof(double));
+  double dt;
+  forces(p,n,acc, &dt);
+  update_pos_vel(p , n, acc, dt);
 	
 }
 

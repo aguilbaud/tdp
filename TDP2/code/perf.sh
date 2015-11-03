@@ -107,9 +107,10 @@ function perf(){
 
 
 
-merge 2 10
-generate_gp_gif_script "output/merged.dat" "lol.gif" "testmpigif.gp"
+#merge 2 10
+#generate_gp_gif_script "output/merged.dat" "lol.gif" "testmpigif.gp"
 
+generate_gp_gif_script gif.dat lol.gif testgif.gp
 # touch $input_data
 # simulation $input_univ $i
 # generate_gp_script $input_data $output_gif $output_plot
