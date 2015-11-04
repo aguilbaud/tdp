@@ -12,17 +12,17 @@
 #define NB_ITER 10000
 
 void init_mpi_datatype(MPI_Datatype * type, particle_t * p){
-    MPI_Datatype types[3] = {MPI_DOUBLE, MPI_DOUBLE, MPI_DOUBLE};
-    int blocklen[3]   = {1, 2, 2};
-    MPI_Aint i1, i2;
-    MPI_Aint disp[3];
+  MPI_Datatype types[3] = {MPI_DOUBLE, MPI_DOUBLE, MPI_DOUBLE};
+  int blocklen[3]   = {1, 2, 2};
+  MPI_Aint i1, i2;
+  MPI_Aint disp[3];
 
-    MPI_Get_address(&p[0], &i1);
-    MPI_Get_address(&p[0].m, &i2); disp[0] = i2 - i1;
-    MPI_Get_address(&p[0].p, &i2); disp[1] = i2 - i1;
-    MPI_Get_address(&p[0].v, &i2); disp[2] = i2 - i1;
+  MPI_Get_address(&p[0], &i1);
+  MPI_Get_address(&p[0].m, &i2); disp[0] = i2 - i1;
+  MPI_Get_address(&p[0].p, &i2); disp[1] = i2 - i1;
+  MPI_Get_address(&p[0].v, &i2); disp[2] = i2 - i1;
 
-    MPI_Type_create_struct(3, blocklen, disp, types, type);
+  MPI_Type_create_struct(3, blocklen, disp, types, type);
 }
 
 int main(int argc, char *argv[]){
@@ -140,10 +140,10 @@ int main(int argc, char *argv[]){
 	if(rate == 0){
 	    write_plot(output_data, loc_size, loc_p); 
 	}
-	else
-	    if(((i+1)%rate) == 1)
-		write_plot(output_data, loc_size, loc_p); 
-	
+	else{
+	  if(((i+1)%rate) == 1)
+	    write_plot(output_data, loc_size, loc_p); 
+	}
 	free(acc);
     }
     

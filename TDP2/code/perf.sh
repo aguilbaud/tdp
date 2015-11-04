@@ -14,8 +14,8 @@ function generate_gp_gif_script(){
     echo "set output '$output_gif'" >> $output_plot
     echo "set key above" >> $output_plot
     echo "stats '$input_file' nooutput" >> $output_plot
-    echo "set xrange [$min_x:$max_x]" >> $output_plot
-    echo "set yrange [$min_y:$max_y]" >> $output_plot
+    echo "set xrange [STATS_min_x:STATS_max_x]" >> $output_plot
+    echo "set yrange [STATS_min_y:STATS_max_y]" >> $output_plot
     echo "do for [i=1:int(STATS_blocks)] {" >> $output_plot
     #seq
     echo -e "\tplot '$input_file' index (i-1) title sprintf('%d',i ) w p lc palette" >> $output_plot
@@ -109,9 +109,11 @@ function perf(){
 
 
 #mpi
-merge 10000 5
-generate_gp_gif_script "output/merged.dat" "mpi.gif" "testmpigif.gp"
 
+#
+merge 1 5
+./util/merge `ls output/outputmpi*.dat`
+#generate_gp_gif_script "merged.dat" "mpi.gif" "testmpigif.gp"
 #seq
 #generate_gp_gif_script "gif.dat" "seq.gif" "testgif.gp"
 

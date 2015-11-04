@@ -16,21 +16,22 @@ void print_particle(particle_t p){
     printf("Mass: %10.f,p.x: %f, p.y %f, p.vx:%f, p.vy:%f\n",p.m, p.p[0], p.p[1], p.v[0], p.v[1]);
 }
 
+/*TODO virer les float */
 particle_t * load_file(FILE * fp, int *n){
   float m,px,py,vx,vy;
   if(fscanf(fp, "%d", n) != 1){
-      fprintf(stderr, "Cannot read input file\n");
-      return NULL;
+    fprintf(stderr, "Cannot read input file\n");
+    return NULL;
   }
   particle_t *p = malloc((*n)*sizeof(particle_t));
   
   for (int i = 0; i <*n; ++i){
-      if(fscanf(fp, "%f %f %f %f %f", &m,&px,&py,&vx,&vy) != 5){
-	  fprintf(stderr, "Cannot read input file.\n");
-	  free(p);
-	  return NULL;
-      }
-      p[i] = init_particle( m,  px,  py,  vx,  vy);
+    if(fscanf(fp, "%f %f %f %f %f", &m,&px,&py,&vx,&vy) != 5){
+      fprintf(stderr, "Cannot read input file.\n");
+      free(p);
+      return NULL;
+    }
+    p[i] = init_particle( m,  px,  py,  vx,  vy);
   }
   return p;
 }
