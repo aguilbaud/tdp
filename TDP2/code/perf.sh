@@ -4,42 +4,34 @@ function generate_gp_gif_script(){
     local input_file=$1
     local output_gif=$2
     local output_plot=$3
-    max_x=$(cut -d' ' -f 1 $input_file | sort -n | tail -n 1)
-    min_x=$(cut -d' ' -f 1 $input_file | sort -n | head -n 1)
-    max_y=$(cut -d' ' -f 2 $input_file | sort -n | tail -n 1)
-    min_y=$(cut -d' ' -f 2 $input_file | sort -n | head -n 1)
-    
+    local nb_img=$4
+    local mpi=$5
+    local i=0
+        
     echo "#!/usr/bin/gnuplot" > $output_plot
-    echo "set terminal gif animate delay 1" >> $output_plot
+    echo "set terminal gif giant notransparent animate delay 1 optimize size 720 540" >> $output_plot
     echo "set output '$output_gif'" >> $output_plot
     echo "set key above" >> $output_plot
-    echo "stats '$input_file' nooutput" >> $output_plot
-    echo "set xrange [STATS_min_x:STATS_max_x]" >> $output_plot
-    echo "set yrange [STATS_min_y:STATS_max_y]" >> $output_plot
-    echo "do for [i=1:int(STATS_blocks)] {" >> $output_plot
+    # echo "stats '$input_file' nooutput" >> $output_plot
+    # echo "set xrange [STATS_min_x*1.05:STATS_max_x*1.05]" >> $output_plot
+    # echo "set yrange [STATS_min_y*1.05:STATS_max_y*1.05]" >> $output_plot
+    echo "do for [i=1:int($nb_img)] {" >> $output_plot
+    echo "set title sprintf('%d',i )" >> $output_plot
     #seq
-    echo -e "\tplot '$input_file' index (i-1) title sprintf('%d',i ) w p lc palette" >> $output_plot
-    echo "}" >> $output_plot
-}
+    if [ $mpi -eq 1 ];then
+	for file in $(ls output/outputmpi*.dat); do
+	    if [ $i -eq 0 ]; then
+		echo -e "\tplot '$file' index (i-1) title sprintf('Process %d',$i ) w p pt 1 lc palette, \\" >> $output_plot
+	    else
+		echo -e "\t\t '$file' index (i-1) title sprintf('Process %d',$i ) w p pt $((1+$i)) lc palette, \\" >> $output_plot
 
-
-function merge(){
-    nb_iter=$1
-    nb_particles=$2
-    files=( 'output/outputmpi00.dat' 'output/outputmpi01.dat' 'output/outputmpi02.dat' 'output/outputmpi03.dat' )
-    output=output/merged.dat
-    size=$(($nb_particles-1))
-    echo -n >  $output
-    for ((i=0; i<$nb_iter ; i++));do
-	for file in ${files[@]}; do
-	    beg=$(( (nb_particles*$i) + 1 + ($i * 2)))
-	    
-	    #echo $i $file $beg $(($beg + $nb_particles))
-	    sed -n "${beg},+${size}p" $file  >> $output
-	    echo -en "\r" >> $output
+	    fi
+	    ((i++))
 	done
-	echo -en "\n\n" >> $output
-    done
+    else
+	echo -e "\tplot '$input_file' index (i-1) title sprintf('%d',i ) w p pt 6 lc palette" >> $output_plot
+    fi
+    echo "}" >> $output_plot
 }
 
 function generate_gp_perf_script(){
@@ -109,15 +101,12 @@ function perf(){
 
 
 #mpi
+generate_gp_gif_script "merged.dat" "mpi.gif" "testmpigif.gp" 100 1
 
-#
-merge 1 5
-./util/merge `ls output/outputmpi*.dat`
-#generate_gp_gif_script "merged.dat" "mpi.gif" "testmpigif.gp"
 #seq
-#generate_gp_gif_script "gif.dat" "seq.gif" "testgif.gp"
+#generate_gp_gif_script "gif.dat" "seq.gif" "testgif.gp" 0
 
-#chmod +x *.gp
+chmod +x *.gp
 
 #rm gif.dat "output/merged.dat"
 # touch $input_data
