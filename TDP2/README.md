@@ -53,6 +53,18 @@ The MPI version automatically generates one of this file for each of the process
 
 With those files, you can generate a gif to visualize the simulation. A commented example on the way to achieve it can be found in perf.sh
 
-![seq gif](http://gfycat.com/OrangeUnpleasantIrrawaddydolphin "seq gif")
-![MPI gif](http://gfycat.com/CircularFewAfricanjacana "MPI gif")
 
+Examples of gif that can be created with the script
+![](http://zippy.gfycat.com/OrangeUnpleasantIrrawaddydolphin.gif)</br>
+![](http://zippy.gfycat.com/CircularFewAfricanjacana.gif)
+
+
+##Performance comparison
+
+Executed on Plafrim on a single NUMA node
+
+| Type            | Time(ms)      |  Nb particles   |   Nb iterations | Time/particle (ms)  |
+| --------------- | ------------- | --------------- | --------------- | ------------------- |
+| Sequential      |    10981      |       5016      |      10         |       2.18          |
+| MPI (24 cores)  |     467       |        5016     |      10         |       0.09          |
+|                 |               |                 |                 |                     |
