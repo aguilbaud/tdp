@@ -9,7 +9,7 @@
 #include <float.h>
 #include "util.h"
 
-#define DEF_DT 1000
+#define DEF_DT 10000
 
 void usage(){
     printf("Usage:\n");
@@ -55,8 +55,7 @@ int main(int argc, char *argv[]){
     char *exec_path = NULL;
     int c;
     opterr = 0;
-
-    
+   
     while ((c = getopt (argc, argv, "i:f:p")) != -1)
 	switch (c) {
 	case 'i':
@@ -117,6 +116,11 @@ int main(int argc, char *argv[]){
     
     //Determining the size of the local buffer
     int loc_size = n/size;
+    if(n%size){
+	fprintf(stderr, "The number of processes must me a divisor of the number of particles");
+	MPI_Finalize();
+	return EXIT_FAILURE;
+    }
         
     particle_t *loc_p  = malloc(loc_size*sizeof(particle_t));//The local particle set
     particle_t *comm_p = malloc(loc_size*sizeof(particle_t));//A communication buffer
@@ -145,7 +149,7 @@ int main(int argc, char *argv[]){
     MPI_Recv_init(comm_p, loc_size, MPI_PARTICLE, prev, 0, MPI_COMM_WORLD, &req_recv);
     MPI_Send_init(calc_p, loc_size, MPI_PARTICLE, next, 0, MPI_COMM_WORLD, &req_send);
 	
-    if(!p_flag)
+    if(!p_flag && rank == 0)
 	printf("%d particles\n",n);
     
     struct timeval start, end;

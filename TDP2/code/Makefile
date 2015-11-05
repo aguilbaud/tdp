@@ -4,7 +4,7 @@ CFLAGS = -g -std=gnu99 -Wall
 MPI = mpicc
 
 
-all: driver driver_mpi merge
+all: driver driver_mpi
 
 driver_mpi: driver_mpi.c particle.o util.o dt_calc.o
 	$(MPI) $(CFLAGS) -o driver_mpi driver_mpi.c particle.o util.o dt_calc.o -lm
@@ -21,12 +21,10 @@ dt_calc.o: dt_calc.c dt_calc.h
 util.o: util.c util.h
 	$(CC) $(CFLAGS) -c util.c
 
-merge: util/merge.c 
-	$(CC) $(CFLAGS) -o util/merge util/merge.c
 
 clean_output:
 	rm output/* *.gif *.gp *.dat *.png
 clean: 
-	rm *.o util/merge driver driver_mpi output/* *.gif *.gp *.dat 2> /dev/null
+	rm *.o driver driver_mpi output/* *.gif *.gp *.dat 2> /dev/null
 
 

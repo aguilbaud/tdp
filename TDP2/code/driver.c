@@ -5,7 +5,7 @@
 #include <sys/time.h>
 #include "util.h"
 
-#define DEFAULT_DT 100000
+#define DEFAULT_DT 10000
 
 void usage(){
     printf("Usage:\n");

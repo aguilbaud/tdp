@@ -33,10 +33,10 @@ void forces(particle_t *p1, const int n1, particle_t *p2, const int n2, double *
 		    double intens = intensity(p1[i].m, p2[j].m, dist);
 		    double vec_unit_x = (p2[j].p[0] - p1[i].p[0]) / dist;
 		    double vec_unit_y = (p2[j].p[1] - p1[i].p[1]) / dist;
-		   
+		    
 		    f_x += (intens * vec_unit_x);
 		    f_y += (intens * vec_unit_y);
-		   
+
 		    if(dist < min_dist)
 			min_dist = dist;
 		}
@@ -49,7 +49,7 @@ void forces(particle_t *p1, const int n1, particle_t *p2, const int n2, double *
 	acc[acc_id] += a_x;
 	acc[acc_id + 1] += a_y;
 	acc_id+=2;
-      
+
 	//Polynomial resolution to compute a fittable dt
 	double a = sqrt( (a_x * a_x) + (a_y * a_y) ) / 2.0;
 	double b = sqrt( (p1[i].v[0] * p1[i].v[0]) + (p1[i].v[1] * p1[i].v[1]) );
@@ -64,16 +64,16 @@ void forces(particle_t *p1, const int n1, particle_t *p2, const int n2, double *
 
 void update_pos_vel(particle_t *p, int n, double *acc, int dt){
     int acc_id = 0;
-    for (int i = 0; i < n; i++) {
-	p[i].v[0] += (acc[acc_id] * dt); 
-	p[i].v[1] += (acc[acc_id+1] * dt);
+	for (int i = 0; i < n; i++) {
+	    p[i].v[0] += (acc[acc_id] * dt); 
+	    p[i].v[1] += (acc[acc_id+1] * dt);
 	
-	p[i].p[0] += (p[i].v[0] * dt) + ((acc[acc_id]/2) *dt *dt);
-	p[i].p[1] += (p[i].v[1] * dt) + ((acc[acc_id+1]/2) *dt *dt);
+	    p[i].p[0] += (p[i].v[0] * dt) + ((acc[acc_id]/2) *dt *dt);
+	    p[i].p[1] += (p[i].v[1] * dt) + ((acc[acc_id+1]/2) *dt *dt);
 
-	acc_id+=2;
+	    acc_id+=2;
+	}
     }
-}
 
 
 void move(particle_t *p, const int n, const int def_dt){

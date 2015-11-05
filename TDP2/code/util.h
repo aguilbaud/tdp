@@ -2,6 +2,13 @@
 #define _UTIL_H
 #include "particle.h"
 
+//used during the generation of an universe
+#define MAX_V 1.0E-2
+#define MIN_V 1.0E-3
+#define MAX_MASS 1.0E15
+#define MIN_MASS 1.0E10
+#define MAX_XY 1E10
+#define MIN_XY -1E10
 
 void print_particle(particle_t p);
 
