@@ -31,12 +31,16 @@ inline double intensity(double m1, double m2, double d){
  * store the computed accelerations of the particles within p1 in acc,
  * return the minimal dt value that will avoid particle collision.
  */
-void forces2(particle_t *p1, const int n1, particle_t *p2, const int n2, double *acc, double *min_dt, int SAME_SET_F);
+void forces(particle_t *p1, const int n1, particle_t *p2, const int n2, double *acc, double *min_dt, int SAME_SET_F);
 
 
 /* Desc: update the positions and velocities of the particles thanks to acc and dt
  */
 void update_pos_vel(particle_t *p, int n, double *acc, int dt);
-void forces(particle_t *p, const int n, double *acc, double *min_dt);
+
+/* only used in sequential, this function is a wrapper for move() + update_pos_vel()
+ */
 void move(particle_t *p, const int n, const int def_dt);
+
+
 #endif

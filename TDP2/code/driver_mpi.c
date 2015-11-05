@@ -51,12 +51,8 @@ int main(int argc, char *argv[]){
     int nb_iter = 20;
        
     //Execution flags
-    int i_flag = 0;
-    int f_flag = 0;
     int p_flag = 0;
-    char *generate_path = NULL;
     char *exec_path = NULL;
-    char *output_path = NULL;
     int c;
     opterr = 0;
 
@@ -65,11 +61,9 @@ int main(int argc, char *argv[]){
 	switch (c) {
 	case 'i':
 	    nb_iter = atoi(optarg);
-	    i_flag = 1;
 	    break;
 	case 'f':
 	    exec_path = optarg;
-	    f_flag = 1;
 	    break;
 	case 'p':
 	    p_flag = 1;
@@ -123,11 +117,7 @@ int main(int argc, char *argv[]){
     
     //Determining the size of the local buffer
     int loc_size = n/size;
-    if(rank == size - 1){
-	loc_size = n%size;
-	printf("%d\n", rest);
-    }
-    
+        
     particle_t *loc_p  = malloc(loc_size*sizeof(particle_t));//The local particle set
     particle_t *comm_p = malloc(loc_size*sizeof(particle_t));//A communication buffer
     particle_t *calc_p = malloc(loc_size*sizeof(particle_t));//A buffer used for calculation
@@ -155,6 +145,13 @@ int main(int argc, char *argv[]){
     MPI_Recv_init(comm_p, loc_size, MPI_PARTICLE, prev, 0, MPI_COMM_WORLD, &req_recv);
     MPI_Send_init(calc_p, loc_size, MPI_PARTICLE, next, 0, MPI_COMM_WORLD, &req_send);
 	
+    if(!p_flag)
+	printf("%d particles\n",n);
+    
+    struct timeval start, end;
+    double elapsed = 0.0;
+
+    gettimeofday(&start,NULL);
     for(int i = 0; i < nb_iter; i++){ 
 	/*To store the computed acceleration of our particles*/
 	double *acc = calloc(loc_size*2,sizeof(double));
@@ -175,7 +172,7 @@ int main(int argc, char *argv[]){
 	    MPI_Start(&req_send);
 	    MPI_Start(&req_recv);
 
-	    forces2(loc_p, loc_size, calc_p, loc_size, acc, &min_dt, (j==0));
+	    forces(loc_p, loc_size, calc_p, loc_size, acc, &min_dt, (j==0));
 	    if(min_dt < my_dt)
 		my_dt = min_dt;
 		
@@ -188,20 +185,34 @@ int main(int argc, char *argv[]){
 	MPI_Allreduce(&my_dt, &global_dt, 1, MPI_DOUBLE, MPI_MIN, MPI_COMM_WORLD);
 	update_pos_vel(loc_p, loc_size, acc, global_dt);
 	
-	if(rate == 0){
-	    write_plot(output_data, loc_size, loc_p);
+	if(!p_flag){
+	    if(rate == 0){
+		write_plot(output_data, loc_size, loc_p);
+	    }
+	    else{
+		if(((i+1)%rate) == 1)
+		    write_plot(output_data, loc_size, loc_p);
+	    }
 	}
 	else{
-	    if(((i+1)%rate) == 1)
-		write_plot(output_data, loc_size, loc_p);
+
 	}
 	free(acc);
     } 
+    gettimeofday(&end,NULL);
+    elapsed = (end.tv_sec - start.tv_sec) * 1000.0;
+    elapsed += (end.tv_usec - start.tv_usec) / 1000.0;
+    double global_time;
+    MPI_Reduce(&elapsed, &global_time, 1, MPI_DOUBLE, MPI_SUM, 0, MPI_COMM_WORLD);
+    if(p_flag && rank == 0)
+	printf("%d %f\n", n, global_time/size);
     
     
     free(loc_p);
     free(comm_p);
     free(calc_p);
+    MPI_Request_free(&req_recv);
+    MPI_Request_free(&req_send);
     MPI_Finalize();
     return EXIT_SUCCESS;
 }

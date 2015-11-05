@@ -25,19 +25,12 @@ void write_file(FILE * f, const int n, particle_t * p);
 particle_t * init_universe(const int n);
 
 /* Desc: create a file which contains a description of the particle set (x_pos y_pos mass)
- * (Useful to create an animation of the simulation
+ * (Useful to create an animation of the simulation)
  * IN fp: the file that will contain the plot
  * IN n:  the size of the particle set
  * IN p:  the particle set
  */
 void write_plot(FILE * fp, int n, particle_t * p);
-
-/* Note: not used
- * IN path: the path of the picture to create
- * IN n:    the size of the particle set
- * IN p:    the particle set
- */
-void write_img_1bpp(char * path, int n, particle_t * p);
 
 
 #endif

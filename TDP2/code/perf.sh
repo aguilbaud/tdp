@@ -12,9 +12,6 @@ function generate_gp_gif_script(){
     echo "set terminal gif giant notransparent animate delay 1 optimize size 720 540" >> $output_plot
     echo "set output '$output_gif'" >> $output_plot
     echo "set key above" >> $output_plot
-    # echo "stats '$input_file' nooutput" >> $output_plot
-    # echo "set xrange [STATS_min_x*1.05:STATS_max_x*1.05]" >> $output_plot
-    # echo "set yrange [STATS_min_y*1.05:STATS_max_y*1.05]" >> $output_plot
     echo "do for [i=1:int($nb_img)] {" >> $output_plot
     echo "set title sprintf('%d',i )" >> $output_plot
     #seq
@@ -45,14 +42,6 @@ function generate_gp_perf_script(){
     echo "set ylabel 'Time(ms)'" >> $output_gp
     echo "plot '$input_file' w lp" >> $output_gp
 
-}
-
-function simulation (){
-    local input_file=$1
-    nb_iter=$2
-    
-    ret=$(./driver -s $input_file -i $nb_iter -p)
-    echo $ret
 }
 
 function perf(){
@@ -99,18 +88,23 @@ function perf(){
     eog $output_png
 }
 
+####################MAIN##################
+#ret=$(./driver -f "data/junk.univ" -
+    #mpi
+    #1st argument: the files created with the application (-o options in sequential) NOT USED WHEN LAST ARGUMENT IS 1
+    #2nd: output file (gif)
+    #3rd: gnuplot script file tha will be generated
+    #4th: number of snapchot ( IF (number of iterations < 1000) : nb of iteration ELSE (nb of iterations/1000) )
+    #5th: 0 if seq // 1 if mpi
+    generate_gp_gif_script "merged.dat" "mpi.gif" "testmpigif.gp" 100 1
 
-#mpi
-generate_gp_gif_script "merged.dat" "mpi.gif" "testmpigif.gp" 100 1
+    #seq
+    #generate_gp_gif_script "gif.dat" "seq.gif" "testgif.gp" 0
 
-#seq
-#generate_gp_gif_script "gif.dat" "seq.gif" "testgif.gp" 0
+    chmod +x *.gp
 
-chmod +x *.gp
 
-#rm gif.dat "output/merged.dat"
-# touch $input_data
-# simulation $input_univ $i
-# generate_gp_script $input_data $output_gif $output_plot
-# ./$output_plot
-# eog $output_gif
+    # simulation $input_univ $i
+    # generate_gp_script $input_data $output_gif $output_plot
+    # ./$output_plot
+    # eog $output_gif

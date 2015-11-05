@@ -18,7 +18,7 @@ particle_t par;
  return par;
 }
 
-void forces2(particle_t *p1, const int n1, particle_t *p2, const int n2, double *acc,  double*min_dt, int SAME_SET_F){
+void forces(particle_t *p1, const int n1, particle_t *p2, const int n2, double *acc,  double*min_dt, int SAME_SET_F){
     
     int acc_id = 0;
    
@@ -79,53 +79,8 @@ void update_pos_vel(particle_t *p, int n, double *acc, int dt){
 void move(particle_t *p, const int n, const int def_dt){
     double *acc = calloc(2*n,sizeof(double));
     double dt = def_dt;
-    forces(p,n,acc, &dt);
+    forces(p , n, p, n, acc, &dt, 1);
     update_pos_vel(p , n, acc, dt);	
     free(acc);
 }
-
-
-void forces(particle_t *p, const int n, double *acc, double *min_dt){
-    int acc_id = 0;
-       
-    for (int i = 0; i < n; i++) {
-	double f_x = 0.0;
-	double f_y = 0.0;
-	double min_dist = DBL_MAX;
-	if(p[i].m != 0.0){
-	    for (int j = 0; j < n; j++) {
-		if(i!=j && p[j].m!=0.0){
-		    double dist = distance(p[i].p[0], p[i].p[1], p[j].p[0], p[j].p[1]);
-		    double intens = intensity(p[i].m, p[j].m, dist);
-		    double vec_unit_x = (p[j].p[0] - p[i].p[0]) / dist;
-		    double vec_unit_y = (p[j].p[1] - p[i].p[1]) / dist;
-	    
-		    f_x += (intens * vec_unit_x);
-		    f_y += (intens * vec_unit_y);
-		    
-		    if(dist < min_dist)
-			min_dist = dist;
-		}
-	    } 
-	    
-	    //acc array contains acceleration vector for each particle
-	    double a_x = f_x / p[i].m;
-	    double a_y = f_y / p[i].m;
-	    acc[acc_id] += a_x;
-	    acc[acc_id + 1] += a_y;
-	    acc_id+=2;
-      
-	    //Polynomial resolution to compute a fittable dt
-	    double a = sqrt( (a_x * a_x) + (a_y * a_y) ) / 2.0;
-	    double b = sqrt( (p[i].v[0] * p[i].v[0]) + (p[i].v[1] * p[i].v[1]) );
-	    double c = -0.01 * min_dist; 
-	    double dt = polynomial_solver(a,b,c);
-	    
-	    if(dt<(*min_dt))
-		*min_dt = dt;
-	}
-    }
-}
-
-
 
