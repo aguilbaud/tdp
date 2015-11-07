@@ -23,7 +23,7 @@ void init_vector(int n, double * v){
 }
 
 double * alloc_matrix(int m, int n){
-  return malloc(sizeof(double)*m*n);//TODO check result
+    return calloc(m*n, sizeof(double));//TODO check result
 }
 
 //if F=1; fill a with 0
