@@ -26,8 +26,8 @@ int check_matrix(double *exp, double *res, int M, int N){
 	double sum_res_line = 0.0;
 	double sum_exp_line = 0.0;
 	for (int j = 0; j < N; j++) {
-	    sum_res_line += res[j*N + i];
-	    sum_exp_line += exp[j*N + i];
+	    sum_res_line += res[j*N + i] * res[j*N + i];
+	    sum_exp_line += exp[j*N + i] * exp[j*N + i];
 	}
 	sum_res += sum_res_line;
 	sum_exp += sum_exp_line;
@@ -118,6 +118,30 @@ int test_cblas_dtrsv_lower(){
     return check_vector(check, x, N);    
 }
 
+int test_cblas_dtrsm_upper(){
+    const int N = 3;
+    double A[] = {2,3,4,5,2,1,7,4,2};
+    double X[] = {-1,-5,3,2,7,-2,4,-1,1};
+    double check[] = {8,-5.5,1.5,-9.25,5.5,-1,4,-1.5,0.5};
+    
+    cblas_dtrsm(CblasRowMajor, CblasLeft, CblasUpper, CblasNoTrans, CblasNonUnit, N, N, 1.0, A, N, X, N);
+    affiche(N, N, X, N, stdout);
+    return check_matrix(check, X, N, N);    
+
+}
+
+int test_cblas_dtrsm_lower(){
+    const int N = 3;
+    double A[] = {2,3,4,5,2,1,7,4,2};
+    double X[] = {-1,-5,3,2,7,-2,4,-1,-1};
+    double check[] = {-1,-2,9,2,1,-11,4,-13,-4};
+    
+    cblas_dtrsm(CblasRowMajor, CblasLeft, CblasLower, CblasNoTrans, CblasUnit, N, N, 1.0, A, N, X, N);
+    affiche(N, N, X, N, stdout);
+    return check_matrix(check, X, N, N);    
+
+}
+
 /*************Test main*************/
 typedef struct{
     int(*fun)(void);
@@ -134,12 +158,14 @@ test_function_t init_test(int (*fun)(void),char *msg){
 
     int main(int argc, char *argv[])
     {
-	const int NB_TESTS = 5;
+	const int NB_TESTS = 7;
 	test_function_t tests[] = {init_test(test_cblas_dscal,"DSCAL TEST") , 
 				   init_test(test_cblas_dger, "DGER TEST"),
 				   init_test(test_cblas_dgetf_2_nopiv, "DGETF NO PIV"),
 				   init_test(test_cblas_dtrsv_upper, "DTRSV UPPER"),
-				   init_test(test_cblas_dtrsv_lower, "DTRSV LOWER")};
+				   init_test(test_cblas_dtrsv_lower, "DTRSV LOWER"),
+				   init_test(test_cblas_dtrsm_upper, "DTRSM UPPER"),
+				   init_test(test_cblas_dtrsm_lower, "DTRSM LOWER")};
 			       
 	int ret;
 	int passed = 0;

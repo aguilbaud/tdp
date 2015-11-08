@@ -5,14 +5,17 @@ MPI = mpicc
 
 all: main timing
 
-main: main.c util.o dgetf2.o dgemm.o dtrsv.o
-	$(CC) $(CFLAGS) -o main main.c util.o dgetf2.o dgemm.o dtrsv.o -lm
+main: main.c util.o dgetf2.o dgemm.o dtrsv.o dtrsm.o
+	$(CC) $(CFLAGS) -o main main.c util.o dgetf2.o dgemm.o dtrsv.o dtrsm.o -lm
 
 timing: timing.c dgetf2.o util.o perf.o
 	$(CC) $(CFLAGS) -o timing timing.c dgetf2.o util.o perf.o
 
 perf.o: perf.c perf.h
 	$(CC) $(CFLAGS) -c perf.c
+
+dtrsm.o: dtrsm.c dtrsv.o cblas.h
+	$(CC) $(CFLAGS) -c dtrsm.c
 
 dtrsv.o: dtrsv.c cblas.h
 	$(CC) $(CFLAGS) -c dtrsv.c

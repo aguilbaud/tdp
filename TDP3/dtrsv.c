@@ -12,7 +12,6 @@ void cblas_dtrsv(const enum CBLAS_ORDER order, const enum CBLAS_UPLO Uplo,
 	    for(int j = i+1; j < N; j++){
 		sum += A[j*lda + i] * X[j];
 	    }
-	    printf("X[%d] = (%f - %f) / %f\n", i, X[i], sum, A[i*lda + i]);
 	    X[i] = (X[i] - sum)/A[i*lda + i];
 	}
     }
@@ -20,7 +19,6 @@ void cblas_dtrsv(const enum CBLAS_ORDER order, const enum CBLAS_UPLO Uplo,
 	for(int i = 0; i<N; i++){
 	    double sum = 0.0;
 	    for (int j=0; j <= i-1; j++) {
-		printf("%d %d\n", i,j );
 		sum += A[j*lda + i] * X[j];
 	    }
 	    X[i] = X[i] - sum;
