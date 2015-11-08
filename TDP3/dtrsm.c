@@ -8,7 +8,7 @@ void cblas_dtrsm(const enum CBLAS_ORDER Order, const enum CBLAS_SIDE Side,
     if(Side == CblasLeft) {
 	//A( LDA, k ) where k is m when SIDE = 'L' 
 	for (int i = 0; i < M; i++) {
-	    cblas_dtrsv(Order, Uplo, TransA, Diag, lda, A, lda, B + (i*ldb + 0), 1);
+	    cblas_dtrsv(Order, Uplo, TransA, Diag, M, A, lda, B + (i*ldb + 0), 1);
 	}
     }
 }

@@ -58,7 +58,7 @@ void cblas_dgemm_scalaire(const enum CBLAS_ORDER Order, const enum CBLAS_TRANSPO
 		    line_B = j;
 		    col_B = k;
 		}
-		C[j*ldc + i] += A[col_A*lda + line_A] * B[col_B*ldb + line_B];
+		C[j*ldc + i] += A[col_A*lda + line_A] * B[col_B*ldb + line_B] *alpha;
 	    }
 	}
     }

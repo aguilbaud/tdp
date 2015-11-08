@@ -5,6 +5,7 @@
 #include "cblas.h"
 #include "util.h"
 #include "dgetf2.h"
+#include "dgetrf.h"
 
 
 #define ERROR_BOUND 1E-6
@@ -69,7 +70,6 @@ int test_cblas_dgetf_2_nopiv(){
     double *check = alloc_matrix(N , N);
     memcpy(check, A, N*N*sizeof(double));
     dgetf_2_nopiv(N, N, A, N);
-
     double *L = alloc_matrix(N , N);
     double *U = alloc_matrix(N , N);
     for (int i = 0; i < N; i++) {
@@ -90,7 +90,7 @@ int test_cblas_dgetf_2_nopiv(){
     init_matrix(N, N, A, 1);
     cblas_dgemm_scalaire(CblasRowMajor, CblasNoTrans,
 			 CblasNoTrans, N, N,
-			 N, 0, L,
+			 N, 1, L,
 			 N, U, N,
 			 0, A, N);
     
@@ -137,7 +137,18 @@ int test_cblas_dtrsm_lower(){
     
     cblas_dtrsm(CblasRowMajor, CblasLeft, CblasLower, CblasNoTrans, CblasUnit, N, N, 1.0, A, N, X, N);
     return check_matrix(check, X, N, N);    
+    
+}
 
+int test_dgetrf(){
+  int N = 3;
+  double A[] = {2,3,4,5,2,1,7,4,2};
+  double B[] = {2,3,4,5,2,1,7,4,2};
+
+  dgetf_2_nopiv(N, N, A, N);  
+  dgetrf(N, N, B, N, NULL, 0);
+
+  return check_matrix(B, A, N, N);
 }
 
 /*************Test main*************/
@@ -156,14 +167,15 @@ test_function_t init_test(int (*fun)(void),char *msg){
 
     int main(int argc, char *argv[])
     {
-	const int NB_TESTS = 7;
+	const int NB_TESTS = 8;
 	test_function_t tests[] = {init_test(test_cblas_dscal,"DSCAL TEST") , 
 				   init_test(test_cblas_dger, "DGER TEST"),
 				   init_test(test_cblas_dgetf_2_nopiv, "DGETF NO PIV"),
 				   init_test(test_cblas_dtrsv_upper, "DTRSV UPPER"),
 				   init_test(test_cblas_dtrsv_lower, "DTRSV LOWER"),
 				   init_test(test_cblas_dtrsm_upper, "DTRSM UPPER"),
-				   init_test(test_cblas_dtrsm_lower, "DTRSM LOWER")};
+				   init_test(test_cblas_dtrsm_lower, "DTRSM LOWER"),
+				   init_test(test_dgetrf, "DGETRF TEST")};
 			       
 	int ret;
 	int passed = 0;
