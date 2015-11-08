@@ -6,6 +6,7 @@
 #include "util.h"
 #include "dgetf2.h"
 
+
 #define ERROR_BOUND 1E-6
 
 /**********Checking functions************/
@@ -96,7 +97,28 @@ int test_cblas_dgetf_2_nopiv(){
     return check_matrix(check, A, N, N);
 }
 
+int test_cblas_dtrsv_upper(){
+    const int N = 3;
+    double A[] = {2,3,4,5,2,1,7,4,2};
+    double x[] = {-4, 5, 6};
+    double check[] = {-3.75, -3.5, 3};
 
+    cblas_dtrsv(CblasRowMajor, CblasUpper, CblasNoTrans, CblasNonUnit, N, A, N, x, 1);
+    return check_vector(check, x, N);    
+}
+
+int test_cblas_dtrsv_lower(){
+    const int N = 3;
+    double A[] = {2,3,4,5,2,1,7,4,2};
+    double x[] = {-4, 5, 6};
+    double check[] = {-4, 17, 5};
+
+    cblas_dtrsv(CblasRowMajor, CblasLower, CblasNoTrans, CblasUnit, N, A, N, x, 1);
+    affiche(1, N, x, 1, stdout);
+    return check_vector(check, x, N);    
+}
+
+/*************Test main*************/
 typedef struct{
     int(*fun)(void);
     char *msg;
@@ -112,11 +134,13 @@ test_function_t init_test(int (*fun)(void),char *msg){
 
     int main(int argc, char *argv[])
     {
-	const int NB_TESTS = 3;
+	const int NB_TESTS = 5;
 	test_function_t tests[] = {init_test(test_cblas_dscal,"DSCAL TEST") , 
 				   init_test(test_cblas_dger, "DGER TEST"),
-				   init_test(test_cblas_dgetf_2_nopiv, "DGETF NO PIV")};
-	
+				   init_test(test_cblas_dgetf_2_nopiv, "DGETF NO PIV"),
+				   init_test(test_cblas_dtrsv_upper, "DTRSV UPPER"),
+				   init_test(test_cblas_dtrsv_lower, "DTRSV LOWER")};
+			       
 	int ret;
 	int passed = 0;
 	for(int i=0; i<NB_TESTS; i++){

@@ -4,11 +4,11 @@
 #include "cblas.h"
 #include "dgetf2.h"
 
-#define MAX_MATRIX_SIZE 10000
+#define MAX_MATRIX_SIZE 1000
 
 void timing_cblas_dgetf2_nopiv(){
     FILE * f = fopen("curves/data/dgetf2_nopiv_mflops.dat","w+");
-    int N = 1000;
+    int N = 100;
 
     while(N < MAX_MATRIX_SIZE){
 	double *A = alloc_matrix(N, N);
