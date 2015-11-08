@@ -1,10 +1,10 @@
-#include "cblas.h"
+#include "mycblas.h"
 
-void cblas_dtrsv(const enum CBLAS_ORDER order, const enum CBLAS_UPLO Uplo,
-                 const enum CBLAS_TRANSPOSE TransA, const enum CBLAS_DIAG Diag,
-                 const int N, const double *A, const int lda, double *X,
-                 const int incX){
-    
+void mycblas_dtrsv(const enum CBLAS_ORDER order, const enum CBLAS_UPLO Uplo,
+		   const enum CBLAS_TRANSPOSE TransA, const enum CBLAS_DIAG Diag,
+		   const int N, const double *A, const int lda, double *X,
+		   const int incX){
+
     //Assuming Diag == CblasNonUnit
     if( Uplo == CblasUpper){
 	for (int i = N-1; i >= 0; i--) {

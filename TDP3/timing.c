@@ -1,8 +1,7 @@
 #include <stdlib.h>
 #include "util.h"
 #include "perf.h"
-#include "cblas.h"
-#include "dgetf2.h"
+#include "mycblas.h"
 
 #define MAX_MATRIX_SIZE 1000
 
@@ -16,7 +15,7 @@ void timing_cblas_dgetf2_nopiv(){
     
 	perf_t p1, p2;
 	perf(&p1);
-	dgetf_2_nopiv(N, N, A, N);
+	mycblas_dgetf2_nopiv(N, N, A, N);
 	perf(&p2);
     
 	perf_diff(&p1,&p2);

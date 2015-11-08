@@ -1,40 +1,30 @@
 CC = gcc
-CFLAGS =  -O3  -std=gnu99 -Wall 
+CFLAGS = -g -std=gnu99 -Wall
 
 MPI = mpicc
 
 all: main timing
 
 
-main: main.c util.o dgetf2.o dgemm.o dtrsv.o dtrsm.o dgesv.o dgetrf.o
-	$(CC) $(CFLAGS) -o main main.c util.o dgetf2.o dgemm.o dtrsv.o dtrsm.o dgesv.o dgetrf.o -lm
+main: main.c util.o dgetf2.o dgemm.o dtrsv.o dtrsm.o dgesv.o dgetrf.o dscal.o dger.o 
+	$(CC) $(CFLAGS) -o main main.c util.o dgemm.o dtrsv.o dtrsm.o dgesv.o dgetrf.o dscal.o dger.o dgetf2.o -lm
 
-timing: timing.c dgetf2.o util.o perf.o
-	$(CC) $(CFLAGS) -o timing timing.c dgetf2.o util.o perf.o
+timing: timing.c dgetf2.o util.o perf.o dscal.o dger.o
+	$(CC) $(CFLAGS) -o timing timing.c dgetf2.o util.o perf.o dscal.o dger.o
+
+
+dgemm.o: dgemm.c mycblas.h cblas.h
+dger.o: dger.c mycblas.h cblas.h
+dgesv.o: dgesv.c mycblas.h cblas.h dgetrf.c dtrsm.c
+dgetf2.o: dgetf2.c mycblas.h cblas.h dscal.c dger.c
+dgetrf.o: dgetrf.c mycblas.h cblas.h dgetf2.c dtrsm.c
+dscal.o: dscal.c mycblas.h cblas.h dgemm.c
+dtrsm.o: dtrsm.c mycblas.h cblas.h dtrsv.c
+dtrsv.o: dtrsv.c mycblas.h cblas.h
 
 perf.o: perf.c perf.h
-	$(CC) $(CFLAGS) -c perf.c
+util.o: util.c
 
-dgesv.o: dgesv.c dgesv.h dtrsm.o dgerf.o
-	$(CC) $(CFLAGS) -c dgesv.c
-
-dtrsm.o: dtrsm.c dtrsv.o cblas.h
-	$(CC) $(CFLAGS) -c dtrsm.c
-
-dtrsv.o: dtrsv.c cblas.h
-	$(CC) $(CFLAGS) -c dtrsv.c
-
-dgemm.o: dgemm.c dgemm.h
-	$(CC) $(CFLAGS) -c dgemm.c
-
-util.o: util.c util.h
-	$(CC) $(CFLAGS) -c util.c
-
-dgetf2.o: dgetf2.h dgetf2.c cblas.h
-	$(CC) $(CFLAGS) -c dgetf2.c
-
-dgetrf.o: dgetrf.h dgetrf.c cblas.h
-	$(CC) $(CFLAGS) -c dgetrf.c
 
 clean: 
 	rm *.o main timing
