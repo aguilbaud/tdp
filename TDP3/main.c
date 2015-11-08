@@ -125,7 +125,6 @@ int test_cblas_dtrsm_upper(){
     double check[] = {8,-5.5,1.5,-9.25,5.5,-1,4,-1.5,0.5};
     
     cblas_dtrsm(CblasRowMajor, CblasLeft, CblasUpper, CblasNoTrans, CblasNonUnit, N, N, 1.0, A, N, X, N);
-    affiche(N, N, X, N, stdout);
     return check_matrix(check, X, N, N);    
 
 }
@@ -137,7 +136,6 @@ int test_cblas_dtrsm_lower(){
     double check[] = {-1,-2,9,2,1,-11,4,-13,-4};
     
     cblas_dtrsm(CblasRowMajor, CblasLeft, CblasLower, CblasNoTrans, CblasUnit, N, N, 1.0, A, N, X, N);
-    affiche(N, N, X, N, stdout);
     return check_matrix(check, X, N, N);    
 
 }
