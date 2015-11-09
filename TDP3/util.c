@@ -5,7 +5,7 @@ void affiche(int m, int n, double * a, int lda, FILE * f){
   int l,c;
   for(l=0;l<m;l++){
     for(c=0;c<n;c++){
-      fprintf(f, "%f ", a[c*lda + l]);
+      fprintf(f, "%20.20f ", a[c*lda + l]);
     }
     fprintf(f,"\n");
   }
