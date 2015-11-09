@@ -1,5 +1,4 @@
 #include "mycblas.h"
-#include <stdio.h>
 
 #define BLOCK_SIZE 2
 #define MIN(A,B) (((A)<(B)) ? (A) : (B))
