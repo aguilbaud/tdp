@@ -7,6 +7,7 @@
 #include <sys/time.h>
 #include <string.h>
 #include <float.h>
+#include <math.h>
 #include "util.h"
 
 #define DEF_DT 10000
@@ -122,10 +123,17 @@ int main(int argc, char *argv[]){
 	MPI_Finalize();
 	return EXIT_FAILURE;
     }
-    int buf_size = (n%size) ? (n+size)/size : (n/size);
-    int loc_size = (rank == size -1) ? (buf_size - (buf_size*size - n)): buf_size;
-    printf("buf_size: %d, loc_size: %d\n", buf_size, loc_size);
-    
+    int buf_size = ceil(n/(double)size);//(n%size) ? (n+size)/size : (n/size);
+    int loc_size = buf_size;
+    if(rank == size -1){
+	loc_size = (buf_size - (buf_size*size - n));
+    }
+    if(loc_size <= 0){
+	fprintf(stderr, "There is too much threads for this problem.");
+	free(p);
+	MPI_Abort(MPI_COMM_WORLD,-1);
+	return EXIT_FAILURE;
+    }    
         
     particle_t *loc_p  = malloc(buf_size*sizeof(particle_t));//The local particle set
     particle_t *comm_p = malloc(buf_size*sizeof(particle_t));//A communication buffer
@@ -135,7 +143,6 @@ int main(int argc, char *argv[]){
     int p_beg = buf_size*rank;
     memcpy(loc_p, p + p_beg, loc_size*sizeof(particle_t));
     free(p);
-    print_particle(loc_p[0]);
     
     //Filling the last buffer with 0 particles
     if(rank == size - 1){
