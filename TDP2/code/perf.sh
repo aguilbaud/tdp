@@ -103,7 +103,7 @@ seq_gif="seq.gif"
 mpi_gif="mpi.gif"
 
 ./driver -f $input -i $nb_iter -o $seq_output -p
-mpiexec -n 4 ./driver_mpi -f $input -i $nb_iter 
+mpiexec -n 3 ./driver_mpi -f $input -i $nb_iter 
 
 #mpi
 #1st argument: the files created with the application (-o options in sequential) NOT USED WHEN LAST ARGUMENT IS 1
@@ -113,7 +113,6 @@ mpiexec -n 4 ./driver_mpi -f $input -i $nb_iter
 #5th: 0 if seq // 1 if mpi
 generate_gp_gif_script "anything" $mpi_gif "testmpigif.gp" 1000 1
 
-#generate_gp_gif_script "seq.dat" $mpi_gif "testmpigif.gp" 1000 0
 
 #seq
 generate_gp_gif_script $seq_output $seq_gif "testgif.gp" 1000 0

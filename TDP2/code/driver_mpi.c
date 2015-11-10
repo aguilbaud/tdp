@@ -115,21 +115,35 @@ int main(int argc, char *argv[]){
     }
     
     //Determining the size of the local buffer
-    int loc_size = n/size;
-    if(n%size){
-	fprintf(stderr, "The number of processes must me a divisor of the number of particles");
+    if(n<size){
+	if(rank==0)
+	    fprintf(stderr, "The number of processes must be greater than the number of particles");
+	free(p);
 	MPI_Finalize();
 	return EXIT_FAILURE;
     }
+    int buf_size = (n%size) ? (n+size)/size : (n/size);
+    int loc_size = (rank == size -1) ? (buf_size - (buf_size*size - n)): buf_size;
+    printf("buf_size: %d, loc_size: %d\n", buf_size, loc_size);
+    
         
-    particle_t *loc_p  = malloc(loc_size*sizeof(particle_t));//The local particle set
-    particle_t *comm_p = malloc(loc_size*sizeof(particle_t));//A communication buffer
-    particle_t *calc_p = malloc(loc_size*sizeof(particle_t));//A buffer used for calculation
+    particle_t *loc_p  = malloc(buf_size*sizeof(particle_t));//The local particle set
+    particle_t *comm_p = malloc(buf_size*sizeof(particle_t));//A communication buffer
+    particle_t *calc_p = malloc(buf_size*sizeof(particle_t));//A buffer used for calculation
 
     //Each process get his part of the particle set
-    int p_beg = (n/size)*rank;
+    int p_beg = buf_size*rank;
     memcpy(loc_p, p + p_beg, loc_size*sizeof(particle_t));
     free(p);
+    print_particle(loc_p[0]);
+    
+    //Filling the last buffer with 0 particles
+    if(rank == size - 1){
+	for (int i = n; i < buf_size*size; i++) {
+	    loc_p[i] = init_particle(0.0,0.0,0.0,0.0,0.0);
+	}
+    }
+
 
     //Init mpi datatypes
     MPI_Datatype MPI_PARTICLE;
@@ -146,8 +160,8 @@ int main(int argc, char *argv[]){
     //Initialising persistent requets
     MPI_Request req_send, req_recv;
     MPI_Status stat_send, stat_recv;
-    MPI_Recv_init(comm_p, loc_size, MPI_PARTICLE, prev, 0, MPI_COMM_WORLD, &req_recv);
-    MPI_Send_init(calc_p, loc_size, MPI_PARTICLE, next, 0, MPI_COMM_WORLD, &req_send);
+    MPI_Recv_init(comm_p, buf_size, MPI_PARTICLE, prev, 0, MPI_COMM_WORLD, &req_recv);
+    MPI_Send_init(calc_p, buf_size, MPI_PARTICLE, next, 0, MPI_COMM_WORLD, &req_send);
 	
     if(!p_flag && rank == 0)
 	printf("%d particles\n",n);
@@ -170,19 +184,19 @@ int main(int argc, char *argv[]){
 	} 
 	 
 	double min_dt = DBL_MAX;
-	memcpy(calc_p, loc_p, loc_size*sizeof(particle_t));
+	memcpy(calc_p, loc_p, buf_size*sizeof(particle_t));
 	for (int j = 0; j < size; j++) {
 	    	    
 	    MPI_Start(&req_send);
 	    MPI_Start(&req_recv);
 
-	    forces(loc_p, loc_size, calc_p, loc_size, acc, &min_dt, (j==0));
+	    forces(loc_p, loc_size, calc_p, buf_size, acc, &min_dt, (j==0));
 	    if(min_dt < my_dt)
 		my_dt = min_dt;
 		
 	    MPI_Wait(&req_send, &stat_send);
 	    MPI_Wait(&req_recv, &stat_recv);
-	    memcpy(calc_p, comm_p, loc_size * sizeof(particle_t));
+	    memcpy(calc_p, comm_p, buf_size * sizeof(particle_t));
 	}
 	
 	double global_dt;
