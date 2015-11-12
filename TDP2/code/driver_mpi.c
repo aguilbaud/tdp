@@ -22,17 +22,18 @@ void usage(){
 
 
 void init_mpi_datatype(MPI_Datatype * type, particle_t * p){
-    MPI_Datatype types[3] = {MPI_DOUBLE, MPI_DOUBLE, MPI_DOUBLE};
-    int blocklen[3]   = {1, 2, 2};
-    MPI_Aint i1, i2;
-    MPI_Aint disp[3];
-
+  MPI_Datatype types[2] = {MPI_DOUBLE, MPI_DOUBLE};
+  int blocklen[2]   = {1, 2};
+  MPI_Aint i1, i2;
+  MPI_Aint disp[2];
+  
     MPI_Get_address(&p[0], &i1);
     MPI_Get_address(&p[0].m, &i2); disp[0] = i2 - i1;
     MPI_Get_address(&p[0].p, &i2); disp[1] = i2 - i1;
-    MPI_Get_address(&p[0].v, &i2); disp[2] = i2 - i1;
+    //    MPI_Get_address(&p[0].v, &i2); disp[2] = i2 - i1;
 
-    MPI_Type_create_struct(3, blocklen, disp, types, type);
+    MPI_Type_create_struct(2
+, blocklen, disp, types, type);
 }
 
 
@@ -129,12 +130,12 @@ int main(int argc, char *argv[]){
 	loc_size = (buf_size - (buf_size*size - n));
     }
     if(loc_size <= 0){
-	fprintf(stderr, "There is too much threads for this problem.");
-	free(p);
-	MPI_Abort(MPI_COMM_WORLD,-1);
-	return EXIT_FAILURE;
+      fprintf(stderr, "There is too much threads for this problem. One thread will not be used");
+      
+      MPI_Abort(MPI_COMM_WORLD,0);
+      return EXIT_SUCCESS;
     }    
-        
+    
     particle_t *loc_p  = malloc(buf_size*sizeof(particle_t));//The local particle set
     particle_t *comm_p = malloc(buf_size*sizeof(particle_t));//A communication buffer
     particle_t *calc_p = malloc(buf_size*sizeof(particle_t));//A buffer used for calculation
@@ -143,13 +144,6 @@ int main(int argc, char *argv[]){
     int p_beg = buf_size*rank;
     memcpy(loc_p, p + p_beg, loc_size*sizeof(particle_t));
     free(p);
-    
-    //Filling the last buffer with 0 particles
-    if(rank == size - 1){
-	for (int i = n; i < buf_size*size; i++) {
-	    loc_p[i] = init_particle(0.0,0.0,0.0,0.0,0.0);
-	}
-    }
 
 
     //Init mpi datatypes
@@ -193,10 +187,9 @@ int main(int argc, char *argv[]){
 	double min_dt = DBL_MAX;
 	memcpy(calc_p, loc_p, buf_size*sizeof(particle_t));
 	for (int j = 0; j < size; j++) {
-	    	    
-	    MPI_Start(&req_send);
+	  MPI_Start(&req_send);
 	    MPI_Start(&req_recv);
-
+	  
 	    forces(loc_p, loc_size, calc_p, buf_size, acc, &min_dt, (j==0));
 	    if(min_dt < my_dt)
 		my_dt = min_dt;
@@ -219,9 +212,7 @@ int main(int argc, char *argv[]){
 		    write_plot(output_data, loc_size, loc_p);
 	    }
 	}
-	else{
-
-	}
+	
 	free(acc);
     } 
     gettimeofday(&end,NULL);
@@ -229,8 +220,9 @@ int main(int argc, char *argv[]){
     elapsed += (end.tv_usec - start.tv_usec) / 1000.0;
     double global_time;
     MPI_Reduce(&elapsed, &global_time, 1, MPI_DOUBLE, MPI_SUM, 0, MPI_COMM_WORLD);
+    global_time = global_time / size;
     if(p_flag && rank == 0)
-	printf("%d %f\n", n, global_time/size);
+	printf("%d %f\n", n, global_time/nb_iter);
     
     
     free(loc_p);

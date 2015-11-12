@@ -1,5 +1,5 @@
 CC = gcc
-CFLAGS = -g -std=gnu99 -Wall 
+CFLAGS = -O2 -std=gnu99 -Wall 
 
 MPI = mpicc
 

@@ -51,18 +51,23 @@ function generate_gp_perf_script(){
 }
 
 function perf(){
+    test_name="seq"
     input_data="output/test.dat"
     input_univ="data/junk.univ"
-    i=1000
-    max_part=1000
-    increment=1.5
+    i=10
+    max_part=40000
+    beg=24
+    increment=2
     output_gif="foobar.gif"
     output_plot="plot_graphic.gp"
-    output_perf="perf.dat"
+    output_perf="${test_name}.dat"
     output_perf_plot="plot_perf.gp"
-    output_png="perf.png"
+    output_png="${test_name}.png"
     progname=driver
-
+    #24 48 72 120 192 288 432 648 984 1488 2232 3360 5040 7560 11352 17040 25560
+    l=(38352)
+#57528 86304 129456)
+    
     if [ ! -e $progname ];then
 	echo "$progname not found. Consider using make."
 	exit
@@ -71,27 +76,32 @@ function perf(){
 
     
     echo "Generating random universe sets."
-    for ((n=100 ; n<max_part ; n=$(echo "$n*$increment" | bc | cut -d. -f1))); do
-	./driver -g data/perf$n.univ -n $n
-    done
+    # for ((n=$beg ; n<max_part ; n=$(echo "$n*$increment" | bc | cut -d. -f1))); do
+    # 	./driver -g data/perf$n.univ -n $n
+    # done
+    # for n in ${l[*]}; do
+    # 	./driver -g data/perf$n.univ -n $n
+    # done
 
     echo "Executing performance tests (this may take some time...)."
-    for ((n=100 ; n<max_part ; n=$(echo "$n*$increment" | bc | cut -d. -f1))); do
-	echo -ne "\rNumber of particles : $n"
-	echo $(simulation data/perf$n.univ $i) >> $output_perf
+    # for ((n=$beg ; n<max_part ; n=$(echo "$n*$increment" | bc | cut -d. -f1))); do
+    for n in ${l[*]}; do
+    	echo -ne "\rNumber of particles : $n"
+    	echo $(./driver -f data/perf$n.univ -i $i -p) >> $output_perf
+
+    	#echo $(mpiexec -n 24 ./driver_mpi -f data/perf$n.univ -i $i -p) >> $output_perf
+	#echo -e $(mpiexec -n 24 hostname) '\n' >> $output_perf
     done
 
     echo -e "\nGeneration gnuplot script."
     generate_gp_perf_script $output_perf_plot $output_perf $output_png
     chmod +x $output_perf_plot
-    ./$output_perf_plot
+    #./$output_perf_plot
 
-    echo "Removing universe sets."
-    for ((n=100 ; n<max_part ; n=$(echo "$n*$increment" | bc | cut -d. -f1))); do
-	rm data/perf$n.univ
-    done
-
-    eog $output_png
+    # echo "Removing universe sets."
+    # for ((n=$beg ; n<max_part ; n=$(echo "$n*$increment" | bc | cut -d. -f1))); do
+    # 	rm data/perf$n.univ
+    # done
 }
 
 ####################MAIN##################
@@ -102,8 +112,8 @@ seq_output="seq.dat"
 seq_gif="seq.gif"
 mpi_gif="mpi.gif"
 
-./driver -f $input -i $nb_iter -o $seq_output -p
-mpiexec -n 3 ./driver_mpi -f $input -i $nb_iter 
+#./driver -f $input -i $nb_iter -o $seq_output -p
+#mpiexec -n 4 ./driver_mpi -f $input -i $nb_iter 
 
 #mpi
 #1st argument: the files created with the application (-o options in sequential) NOT USED WHEN LAST ARGUMENT IS 1
@@ -111,13 +121,14 @@ mpiexec -n 3 ./driver_mpi -f $input -i $nb_iter
 #3rd: gnuplot script file tha will be generated
 #4th: number of snapchot ( IF (number of iterations < 1000) : nb of iteration ELSE 1000)
 #5th: 0 if seq // 1 if mpi
-generate_gp_gif_script "anything" $mpi_gif "testmpigif.gp" 1000 1
+#generate_gp_gif_script "anything" $mpi_gif "testmpigif.gp" 1000 1
 
 
 #seq
-generate_gp_gif_script $seq_output $seq_gif "testgif.gp" 1000 0
+#generate_gp_gif_script $seq_output $seq_gif "testgif.gp" 1000 0
 
 chmod +x *.gp
+perf
 echo "You can execute ./testmpigif.gp to create the gif generated with the mpi programm ($mpi_gif)"
 echo "You can execute ./testgif.gp to create the gif generated with the programm ($seq_gif)"
 

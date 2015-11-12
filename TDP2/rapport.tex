@@ -72,10 +72,10 @@
 
 
 \section{Version séquentielle}
-Avant de commencer la version parallèle, nous avons d'abord choisi de programmer en séquentiel dans le but de pouvoir valider notre code sans que les erreurs pouvant être provoqué par MPI ne rentre en ligne de compte. De plus, le code permettant le calcul des forces pouvait être entierement réutilisé dans la version parallèle. Cela nous permet également d'avoir un bon point de comparaison pour comparer les résultats en obtenus en MPI.
+Avant de commencer la version parallèle, nous avons d'abord choisi de programmer en séquentiel dans le but de pouvoir valider notre code sans que les erreurs pouvant être provoquées par MPI ne rentre en ligne de compte. De plus, le code permettant le calcul des forces pouvait être entierement réutilisé dans la version parallèle. Cela nous permet également d'avoir un bon point de comparaison pour valider les résultats en obtenus en MPI.
 
 \subsection{L'implémentation séquentielle}
-Nous avons créé une structure permettant de stocker l'état des particules (i.e. la masse, un vecteur position et un vecteur vitesse). En effet, il n'est pas nécessaire de stocker l'accéleration directement dans la structure car elle est recalculée à chaque pas de temps.
+Nous avons créé une structure (fig. \ref{struct}) permettant de stocker l'état des particules (i.e. la masse, un vecteur position et un vecteur vitesse). En effet, il n'est pas nécessaire de stocker l'accéleration directement dans la structure car elle est recalculée à chaque pas de temps.
 
 \begin{figure}[h]
   \centering
@@ -85,21 +85,12 @@ Nous avons créé une structure permettant de stocker l'état des particules (i.
       double p[2];
       double v[2];
     }particle_t;\end{lstlisting}
-  \caption{Structure d'une particule}
+  \caption{\label{struct}Structure d'une particule}
 \end{figure}
 
-Nous avons plutôt choisi un type de donnée AoS que SoA.
-La fonction permettant de calculer les intéractions entre particules consiste en 2 boucles imbriquées parcourant chacune un ensemble de particules. Pour calculer ces intéractions, nous avons besoins de la masse et de la position des particules. Si nous utilisons un type SoA, avec un grand nombre de particules, une partie du tableau contenant les masses sera chargé dans le cache, puis une partie du tableau des positions. Le cache alternera donc une ligne contenant les masses et une ligne contenant les positions. Cependant, il faut les positions de 2 particules pour calculer la distance les séparant. Dans 
-un seul des tableaux de masses ou de positions pouraient rester dans le cache, provoquant un cach miss dés que nous aurions besoin d'une donée présente dans l'autre tableau. 
-Avec un type AoS les données relatives aux particules sont stockées de façon contigüe en mémoire et toutes les données chargées dans le cache sont utilisées ce qui réduit le nombre de cach miss.
+Nous discuterons de la pertinence de ce choix dans la partie \ref{subsec:datatype}.
 
 
-\begin{figure}[h]
-  \centering
-  \includegraphics[scale=0.5]{Diagramme1.jpeg}
-  \caption{\label{fig:label} }
-\end{figure}
-A partir de point la, il y aura des cache miss à chaque nouvelle ligne de cache. Les positions vont donc être écrites par dessus les masses ce qui produira encore des cach miss.
 
 \subsection{Exécution séquentielle}
 
@@ -109,66 +100,89 @@ A partir de point la, il y aura des cache miss à chaque nouvelle ligne de cache
   \caption{\label{seq_ti}Temps/itération en fonction du nombre de particules}
   
 \end{figure}
-Nous pouvons observer sur cette courbe que le temps d'une itération est fortement dépendant du nombre de particules. En effet, l'algorithme utilisé est en $ O(n^2) $ car chaque particule doit intéragir avec les $ n-1 $ autres particules.
+Nous pouvons observer sur cette courbe (fig \ref{seq_ti}) que l'algorithme a un comportement quadratique. En effet, l'algorithme utilisé est en $ O(n^2) $ car à chaque pas de temps, chaque particule doit intéragir avec les $ n-1 $ autres particules.
 
 
 \section{Version MPI}
-\subsection{Choix des communications}
-Nous nous sommes ici intéressé aux différents modes de communications disponibles avec MPI dans le but de comparer leurs impacts sur les performances de l'application. Dans un premier temps, nous avons utilisé les comunications point-à-point non-bloquantes. Cependant, les communications étant toujours appelées avec les mêmes arguments, il était possible de les transformer en communications persistantes.
-
-\begin{figure}[h]
-  \centering
-  \includegraphics[scale=0.5]{ResultTDP2/mpi_comm/mpi_comm_singlenode.pdf}
-  \caption{\label{fig:tf(n)1}Comparaison du type de communications sur 1 noeud}
-\end{figure}
-
-\begin{figure}[h]
-  \centering
-  \includegraphics[scale=0.5]{ResultTDP2/mpi_comm/mpi_comm_multinode.pdf}
-  \caption{\label{fig:tf(n)2}Comparaison du type de communications sur 2 noeuds}
-\end{figure}
-
-
-\paragraph{}
-Commentaires sur les courbes
+Nous avons ensuite débuté l'implémentation de la version MPI de l'application. Nous utilisons une fonction ``forces'' (utilisée dans la version séquentielle) qui permet de calculer les intéractions entre 2 ensemble de particules et de calculer le pas de temps $ dt $ qui sera utilisé.
 
 \subsection{Structure de données MPI}
-Nous avons ensuite voulu comparer l'impact de la taille de la structure de données que les processus s'échangaient. Pour cela, nous avons d'abord créé un datatype MPI grace à la fonction MPI\_Type\_create\_struct contenant les mêmes données que la structure classique. Nous avons ensuite comparé les temps d'éxécution avec ce type de données et un second ne contenant pas les vitesses.
+Nous nous somme ici intéressé à l'impact de la taille de la structure de données que les processus s'échangaient. Pour cela, nous avons d'abord créé un datatype MPI grace à la fonction MPI\_Type\_create\_struct contenant les mêmes données que la structure utilisé par la version séquentielle (fig \ref{struct}). Nous avons ensuite comparé les temps d'exécution de la simulation avec ce type de données et un second ne contenant pas les vitesses.
 
 \begin{figure}[!h]
   \centering
-  \includegraphics[scale=0.5]{ResultTDP2/mpi_datatype/mpi_datatype_singlenode.pdf}
+  \includegraphics[scale=0.7]{ResultTDP2/mpi_datatype/mpi_datatype_singlenode.pdf}
   \caption{\label{fig:tf(n)data1}Comparaison du datatype sur 1 noeud}
 \end{figure}
 
 \begin{figure}[!h]
   \centering
-  \includegraphics[scale=0.5]{ResultTDP2/mpi_datatype/mpi_datatype_multinode.pdf}
+  \includegraphics[scale=0.7]{ResultTDP2/mpi_datatype/mpi_datatype_multinode.pdf}
   \caption{\label{fig:tf(n)data2}Comparaison du datatype sur 2 noeuds}
 \end{figure}
 
 
 \paragraph{}
-Sur la figure \ref{fig:tf(n)data1}, nous pouvons observer que la durée d'une itération est bien moindre lorsque l'on n'envoie plus les vitesses des particules lors des transmissions. Pour chaque itérations de la simulation, $ nbProc \times (nbProc - 1) $ messages sont envoyés. Nous économisons donc l'envoi de $ nbMessages \times nbIter \times \frac{nbParticules}{nbProc} \times 2 $ double par rapport à l'autre type de donnée. Pour 10000 particules et 1000 itérations sur 20 processus, cela représente 2,8 Go de données non-envoyées.
+Sur les figures \ref{fig:tf(n)data1} et \ref{fig:tf(n)data2}, nous pouvons observer que la durée d'une itération diminue lorsque l'on n'envoie plus les vitesses des particules lors des communications inter-processus. Pour chaque itération de la simulation, $ nbProc \times (nbProc - 1) $ messages sont envoyés. Nous économisons donc l'envoi de $ nbMessages \times nbIter \times \frac{nbParticules}{nbProc} \times 2 $ double sur une exécution complète par rapport à l'autre type de donnée. Par exemple, pour 10000 particules et 1000 itérations sur 20 processus, cela représente 2,8 Go de données non-envoyées. Nous avons donc choisi de garder ce type de données pour la suite du rapport.
 
+\newpage
+
+\subsection{Choix des communications}
+Nous nous sommes ensuite intéressé aux différents modes de communications disponibles avec MPI dans le but de comparer leurs impacts sur les performances de l'application. Dans un premier temps, nous avons utilisé les comunications point-à-point non-bloquantes. Cependant, les communications étant toujours appelées avec les mêmes arguments, il était possible de les transformer en communications persistantes.
+
+\begin{figure}[h]
+  \centering
+  \includegraphics[scale=0.7]{ResultTDP2/mpi_comm/mpi_comm_singlenode.pdf}
+  \caption{\label{fig:tf(n)1}Comparaison du type de communications sur 1 noeud}
+\end{figure}
+
+\begin{figure}[h]
+  \centering
+  \includegraphics[scale=0.7]{ResultTDP2/mpi_comm/mpi_comm_multinode.pdf}
+  \caption{\label{fig:tf(n)2}Comparaison du type de communications sur 2 noeuds}
+\end{figure}
+
+
+\paragraph{}
+Nous pouvons observer sur les figures \ref{fig:tf(n)1} et \ref{fig:tf(n)2} que le fait d'utiliser des communications persistantes ou non ne semble pas avoir d'influence sur la durée d'exécution d'une itération que ce soit sur un seul ou deux noeud NUMA. Cela peut être expliquer par le fait que les calculs recouvrent les communications. Nous avons donc voulu profiler notre application pour en être sûr mais nous n'avons pas trouvé les outils nécessaires sur PlaFRIM.
+
+
+
+
+\section{Procédure de test}
+Pour réaliser l'ensemble des courbes présentées, nous avons utilisé la même procédure. Que ce soit dans la version séquentielle ou la version paralléle, nous mesurons seuleument le temps pris pour calculer l'ensemble des intéractions puis la mise à jour des positions et des vitesses. En MPI, ce temps prend en compte le temps des communications. Nous avons choisi de mesurer le temps d'une itération en fonction du nombre de particules car c'est une unité de temps suffisante pour étudier le comportement de la simulation. Tout les tests sont effectués sur 24 coeurs sur PlaFRIM: 
+\begin{itemize}
+\item 1 noeud NUMA, 24 coeurs;
+\item 2 noeuds NUMA, 12 coeurs/noeud.
+\end{itemize}
+
+Pour générer les courbes nous mesurons donc le temps d'exécution d'une itération pour un nombre de particules variant de 24 à environ 40000 par pas de 50\%.
 
 \section{Comparaison}
-\subsection{Procédure de test}
-Pour réaliser l'ensemble des courbes présentées, nous avons utilisé la même procédure. Que ce soit dans la version séquentielle ou la version paralléle, nous mesurons seuleument le temps pris pour calculer l'ensemble des intéractions puis la mise à jour des positions et vitesses. En MPI, ce temps prend en compte le temps des communications.
+
+\begin{figure}[h]
+  \centering
+  \includegraphics[scale=0.7]{ResultTDP2/seq_mpi.pdf}
+  \caption{\label{seq_mpi}Comparaison MPI/séquentielle}
+\end{figure}
+
 
 
 \section{Améliorations possibles}
 \subsection{Algorithmique}
-Afin d'améliorer les performances de cette application, nous pourions éviter de calculer les interactions entre toutes les particules. En effet, la force gravitationnelle étant inversement proportionnelle à la distance au carré, elle devient négligeable pour des particules trés éloignées. Au lieu de découper l'espace de manière had-oc, nous pourrions le diviser en une grille. Chaque bloc ainsi obtenu ne devrait intéragir qu'avec lui même et les 8 blocs adjacents. Ceci réduirait le temps de calculs des intéractions ainsi que la quantité de données échangée par les processus MPI.
+Afin d'améliorer les performances de cette application, nous pourions éviter de calculer les interactions entre toutes les particules. En effet, la force gravitationnelle étant inversement proportionnelle à la distance au carré, elle devient négligeable pour des particules trés éloignées. Au lieu de découper le tableau contenant les particules, nous pourrions diviser l'espace en une grille (fig \ref{algobloc}). Chaque bloc ainsi obtenu ne devrait intéragir qu'avec lui même et les 8 blocs adjacents. Ceci réduirait le temps de calcul des intéractions ainsi que la quantité de données échangée par les processus MPI.
 
 \paragraph{} 
-Il faut par contre pouvoir déterminer la taille de ces blocs afin de ne pas complétement fausser les résultats.
+Il faut par contre pouvoir déterminer la taille de ces blocs afin de ne pas complétement fausser les résultats. 
 
 \begin{figure}[ht]
   \centering
-  \includegraphics[scale=0.5]{algobloc.pdf}
-  \caption{\label{fig:label} }
+  \includegraphics[scale=0.5]{ResultTDP2/algobloc.pdf}
+  \caption{\label{algobloc}Algorithme par bloc - Division de l'espace}
 \end{figure}
 
+\subsection{Type de données}
+\label{subsec:datatype}
+Dans notre implémentation, nous utilisons un type de données Array of Structures (AoS). Lors du calcul des intéractions, toutes les données relatives aux particules sont chargées dans le cache, même la vitesse qui n'est pas nécessaire. Il serai donc possible d'utiliser un type de données Structure of Arrays (SoA) pour éviter que le cache soit pollué par des données inutiles.
 
 \end{document}
