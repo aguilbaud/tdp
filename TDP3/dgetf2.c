@@ -1,7 +1,7 @@
 #include "mycblas.h"
 
 void mycblas_dgetf2_nopiv(const int M, const int N, double * A, const int lda){
-    for(int i = 0; i < M; i++){
+    for(int i = 0; i < N; i++){
 	double *col = A + (i*lda + (i+1));
 	double *line = A + ((i+1)*lda + i);
 	double *ssmat = A + ((i+1)*lda + (i+1));

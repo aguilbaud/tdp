@@ -153,6 +153,27 @@ int test_dgetrf(){
   return check_matrix(A, B, N, N);
 }
 
+int test_dgetrf2(){
+  int N=8;
+  double A[] = {5,-8,4,3,0,-6,-1,-10,
+		-7,7,-5.5555555555555555,0,-9,7,0,-7,
+		2.4444444444444444,-10,-4,-5,-2,7,5,-8,
+		8,-1.1111111111111111,0,1,-5,9,8,1,
+		7,1,-1,1,-6,-8,3,8.8888888888888888,
+		-1,-1,-3,-6.6666666666666666,7.7777777777777777,6,2,4,
+		-3,1.7777777777777777,10,-9,10,-9.9999999999999999,4,6};
+
+  double *A2  = malloc(sizeof(double)*8*8);
+  memcpy(A2, &A, sizeof(double)*8*8);
+  int ipiv[3];
+  int info;
+
+  mycblas_dgetrf(N, N, A2, N, ipiv, &info);
+
+  free(A2);
+  return 0;
+}
+
 /*************Test main*************/
 typedef struct{
   int(*fun)(void);
@@ -169,7 +190,7 @@ test_function_t init_test(int (*fun)(void),char *msg){
 
 int main(int argc, char *argv[])
     {
-      const int NB_TESTS = 8;
+      const int NB_TESTS = 9;
       test_function_t tests[] = {init_test(test_cblas_dscal,"DSCAL TEST"), 
 				 init_test(test_cblas_dger, "DGER TEST"),
 				 init_test(test_cblas_dgetf2_nopiv, "DGETF NO PIV"),
@@ -177,8 +198,8 @@ int main(int argc, char *argv[])
 				 init_test(test_cblas_dtrsv_lower, "DTRSV LOWER"),
 				 init_test(test_cblas_dtrsm_upper, "DTRSM UPPER"),
 				 init_test(test_cblas_dtrsm_lower, "DTRSM LOWER"),
-				 init_test(test_dgetrf, "DGETRF TEST")};
-
+				 init_test(test_dgetrf, "DGETRF TEST"),
+        			 init_test(test_dgetrf2, "DGETRF2 TEST")};
       int ret;
       int passed = 0;
 

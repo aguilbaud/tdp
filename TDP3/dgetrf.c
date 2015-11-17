@@ -1,6 +1,7 @@
 #include "mycblas.h"
+#include <stdio.h>
 
-#define BLOCK_SIZE 2
+#define BLOCK_SIZE 4
 #define MIN(A,B) (((A)<(B)) ? (A) : (B))
 
 void mycblas_dgetrf(const int M, const int N, double *A, const int lda, int *ipiv, int *info)
@@ -10,6 +11,8 @@ void mycblas_dgetrf(const int M, const int N, double *A, const int lda, int *ipi
 			      MIN(BLOCK_SIZE,N-(BLOCK_SIZE*j)), 
 			      A + (M*j*BLOCK_SIZE + j*BLOCK_SIZE), 
 			      M);
+	if(j==0)
+       	  affiche(M, N, A, lda, stdout);
 	if(j<M-BLOCK_SIZE){
 		   
 	  mycblas_dtrsm(CblasColMajor, CblasLeft, CblasLower, CblasNoTrans, CblasUnit,
