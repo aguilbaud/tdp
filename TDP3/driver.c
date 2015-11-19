@@ -172,7 +172,7 @@ int test_dgetrf2(){
     memcpy(check, A, N*N*sizeof(double));
 
     mycblas_dgetrf(N, N, A, N, ipiv, &info);
-
+    affiche(N,N,A,N,stdout);
     double *L = alloc_matrix(N , N);
     double *U = alloc_matrix(N , N);
     for (int i = 0; i < N; i++) {
@@ -196,79 +196,82 @@ int test_dgetrf2(){
 			   N, 1, L,
 			   N, U, N,
 			   0, A, N);
+
     int res = check_matrix(check, A, N, N);
 
     return res;
 
 }
 
-/* int test_dgesv(){ */
-/*     const int N = 5; */
-/*     double *A = alloc_matrix(N, N); */
-/*     double *B = alloc_vector(N); */
-/*     double *check = alloc_vector(N); */
-
-/*     //Filling A */
-/*     for (int i = 0; i < N-1; i++) { */
-/* 	A[(i+1)*N + i] = i+1; */
-/*     } */
-/*     for (int i = 0; i < N; i++) { */
-/* 	A[i] = 1; */
-/*     } */
-/*     //Filling B */
-/*     for (int i = 0; i < N-1; i++) { */
-/* 	B[i] = i+2; */
-/* 	check[i] = 1; */
-/*     } */
-/*     B[N-1] = 1; */
-/*     check[N-1] = 1; */
+int test_dgesv(){
+    int Na = 8;
+	int Nb = 2;
+	double A[] = {5,-8,4,3,0,-6,-1,-10,
+		      -7,7,-5.5555555555555555,0,-9,7,0,-7,
+		      2.4444444444444444,-10,-4,-5,-2,7,5,-8,
+		      8,-1.1111111111111111,0,1,-5,9,8,1,
+		      7,1,-1,1,-6,-8,3,8.8888888888888888,
+		      -1,-1,-3,-6.6666666666666666,7.7777777777777777,6,2,4,
+		      4,6,-2,-2,5,-2,7,5,
+		      -3,1.7777777777777777,10,-9,10,-9.9999999999999999,4,6};
     
-/*     mycblas_dgesv(N, 1, A, N, NULL, B, 1, NULL); */
+	double B[] = {-5.2,3,5.1,-8.1,71,-9.45,-45.32,12,
+		      12.3,-8,-8.23,12.5,48.6,-2.3,9.12,45};
+	double *C = calloc(Na*Nb, sizeof(double));
+	double *check = malloc(sizeof(double) * Na*Nb);
+	memcpy(check,B, sizeof(double) * Na*Nb);
 
-/*     int ret = check_matrix(check, B, N, N) ; */
-/*     affiche(N,1,B,N,stdout); */
-/*     free(A); */
-/*     free(B); */
-/*     free(check); */
-/*     return ret; */
-/* } */
+	mycblas_dgesv(Na, Nb, A, Na, NULL, B, Na, NULL);
+
+	mycblas_dgemm_scalaire(CblasRowMajor, CblasNoTrans,
+			       CblasNoTrans, Na, Nb, Na, 1.0, A, Na, B, Na, 0.0, C, Na);
+
+	int ret = check_matrix(check, C, Na, Nb) ;
+	affiche(Na,Nb,B,Na,stdout);
+	printf("\n");
+	affiche(Na,Nb,check,Na,stdout);
+	free(C);
+	free(check);
+	return ret;
+    }
 
 
-/*************Test main*************/
-typedef struct{
-    int(*fun)(void);
-    char *msg;
-}test_function_t;
+    /*************Test main*************/
+    typedef struct{
+	int(*fun)(void);
+	char *msg;
+    }test_function_t;
 
 
-test_function_t init_test(int (*fun)(void),char *msg){
-    test_function_t tf;
+    test_function_t init_test(int (*fun)(void),char *msg){
+	test_function_t tf;
 	tf.fun = fun;
 	tf.msg = msg;
 	return tf;
     }
 
-int main(int argc, char *argv[])
-{
+    int main(int argc, char *argv[])
+    {
 
-    const int NB_TESTS = 9;
-    test_function_t tests[] = {init_test(test_cblas_dscal,"DSCAL TEST"), 
-			       init_test(test_cblas_dger, "DGER TEST"),
-			       init_test(test_cblas_dgetf2_nopiv, "DGETF NO PIV"),
-			       init_test(test_cblas_dtrsv_upper, "DTRSV UPPER"),
-			       init_test(test_cblas_dtrsv_lower, "DTRSV LOWER"),
-			       init_test(test_cblas_dtrsm_upper, "DTRSM UPPER"),
-			       init_test(test_cblas_dtrsm_lower, "DTRSM LOWER"),
-			       init_test(test_dgetrf, "DGETRF TEST"),
-			       init_test(test_dgetrf2, "DGETRF2 TEST")};
-    int ret;
-    int passed = 0;
+	const int NB_TESTS = 10;
+	test_function_t tests[] = {init_test(test_cblas_dscal,"DSCAL TEST"), 
+				   init_test(test_cblas_dger, "DGER TEST"),
+				   init_test(test_cblas_dgetf2_nopiv, "DGETF NO PIV"),
+				   init_test(test_cblas_dtrsv_upper, "DTRSV UPPER"),
+				   init_test(test_cblas_dtrsv_lower, "DTRSV LOWER"),
+				   init_test(test_cblas_dtrsm_upper, "DTRSM UPPER"),
+				   init_test(test_cblas_dtrsm_lower, "DTRSM LOWER"),
+				   init_test(test_dgetrf, "DGETRF TEST"),
+				   init_test(test_dgetrf2, "DGETRF2 TEST"),
+				   init_test(test_dgesv, "DGESV TEST") };
+	int ret;
+	int passed = 0;
 
-    for(int i=0; i<NB_TESTS; i++){
-	ret = tests[i].fun();
-	passed+=ret;
-	printf("%-25s%6s\n", tests[i].msg, (!ret)?"\033[31;1mFAILED\033[0m":"\033[32;1mPASSED\033[0m");
+	for(int i=0; i<NB_TESTS; i++){
+	    ret = tests[i].fun();
+	    passed+=ret;
+	    printf("%-25s%6s\n", tests[i].msg, (!ret)?"\033[31;1mFAILED\033[0m":"\033[32;1mPASSED\033[0m");
+	}
+	printf("\n%d out of %d tests passed.\033[0m\n",passed,NB_TESTS);
+	return 0;
     }
-    printf("\n%d out of %d tests passed.\033[0m\n",passed,NB_TESTS);
-    return 0;
-}
