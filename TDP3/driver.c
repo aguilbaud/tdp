@@ -202,36 +202,40 @@ int test_dgetrf2(){
 
 }
 
-/* int test_dgesv(){ */
-/*     const int N = 5; */
-/*     double *A = alloc_matrix(N, N); */
-/*     double *B = alloc_vector(N); */
-/*     double *check = alloc_vector(N); */
+int test_dgesv(){
+    const int N = 5;
+    double *A = alloc_matrix(N, N);
+    double *B = alloc_vector(N);
+    double *check = alloc_vector(N);
 
-/*     //Filling A */
-/*     for (int i = 0; i < N-1; i++) { */
-/* 	A[(i+1)*N + i] = i+1; */
-/*     } */
-/*     for (int i = 0; i < N; i++) { */
-/* 	A[i] = 1; */
-/*     } */
-/*     //Filling B */
-/*     for (int i = 0; i < N-1; i++) { */
-/* 	B[i] = i+2; */
-/* 	check[i] = 1; */
-/*     } */
-/*     B[N-1] = 1; */
-/*     check[N-1] = 1; */
+    //Filling A
+    for (int i = 0; i < N-1; i++) {
+	A[(i+1)*N + i] = i+1;
+    }
+    for (int i = 0; i < N; i++) {
+	A[i] = 1;
+    }
+    //Filling B
+    for (int i = 0; i < N-1; i++) {
+	B[i] = i+2;
+	check[i] = 1;
+    }
+    B[N-1] = 1;
+    check[N-1] = 1;
     
-/*     mycblas_dgesv(N, 1, A, N, NULL, B, 1, NULL); */
+    affiche(N,1,B,N,stdout);
+    printf("\n");
+    affiche(N,N,B,N,stdout);
 
-/*     int ret = check_matrix(check, B, N, N) ; */
-/*     affiche(N,1,B,N,stdout); */
-/*     free(A); */
-/*     free(B); */
-/*     free(check); */
-/*     return ret; */
-/* } */
+    mycblas_dgesv(N, 1, A, N, NULL, B, 1, NULL);
+
+    int ret = check_matrix(check, B, N, N) ;
+    affiche(N,1,B,N,stdout);
+    free(A);
+    free(B);
+    free(check);
+    return ret;
+}
 
 
 /*************Test main*************/
@@ -251,7 +255,7 @@ test_function_t init_test(int (*fun)(void),char *msg){
 int main(int argc, char *argv[])
 {
 
-    const int NB_TESTS = 9;
+    const int NB_TESTS = 10;
     test_function_t tests[] = {init_test(test_cblas_dscal,"DSCAL TEST"), 
 			       init_test(test_cblas_dger, "DGER TEST"),
 			       init_test(test_cblas_dgetf2_nopiv, "DGETF NO PIV"),
@@ -260,7 +264,8 @@ int main(int argc, char *argv[])
 			       init_test(test_cblas_dtrsm_upper, "DTRSM UPPER"),
 			       init_test(test_cblas_dtrsm_lower, "DTRSM LOWER"),
 			       init_test(test_dgetrf, "DGETRF TEST"),
-			       init_test(test_dgetrf2, "DGETRF2 TEST")};
+			       init_test(test_dgetrf2, "DGETRF2 TEST"),
+			       init_test(test_dgesv, "DGESV TEST") };
     int ret;
     int passed = 0;
 
