@@ -9,6 +9,6 @@ void mycblas_dtrsm(const enum CBLAS_ORDER Order, const enum CBLAS_SIDE Side,
 	//A( LDA, k ) where k is m when SIDE = 'L' 
       for (int i = 0; i < N; i++) {
 	mycblas_dtrsv(Order, Uplo, TransA, Diag, M, A, lda, B + (i*ldb + 0), 1);
-      }
+	}
     }
 }

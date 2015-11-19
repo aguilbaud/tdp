@@ -135,7 +135,6 @@ int test_cblas_dtrsm_lower(){
   double A[] = {2,3,4,5,2,1,7,4,2};
   double X[] = {-1,-5,3,2,7,-2,4,-1,-1};
   double check[] = {-1,-2,9,2,1,-11,4,-13,-4};
-    
   mycblas_dtrsm(CblasRowMajor, CblasLeft, CblasLower, CblasNoTrans, CblasUnit, N, N, 1.0, A, N, X, N);
   return check_matrix(check, X, N, N);        
 }
@@ -161,17 +160,41 @@ int test_dgetrf2(){
 		8,-1.1111111111111111,0,1,-5,9,8,1,
 		7,1,-1,1,-6,-8,3,8.8888888888888888,
 		-1,-1,-3,-6.6666666666666666,7.7777777777777777,6,2,4,
+		4,6,-2,-2,5,-2,7,5,
 		-3,1.7777777777777777,10,-9,10,-9.9999999999999999,4,6};
-
-  double *A2  = malloc(sizeof(double)*8*8);
-  memcpy(A2, &A, sizeof(double)*8*8);
   int ipiv[3];
   int info;
+  double *check = alloc_matrix(N , N);
+  memcpy(check, A, N*N*sizeof(double));
 
-  mycblas_dgetrf(N, N, A2, N, ipiv, &info);
+  mycblas_dgetrf(N, N, A, N, ipiv, &info);
 
-  free(A2);
-  return 0;
+  double *L = alloc_matrix(N , N);
+  double *U = alloc_matrix(N , N);
+  for (int i = 0; i < N; i++) {
+    for (int j = 0; j <= i; j++) {
+      if(i==j)
+	L[j*N + i] = 1.0;
+      else
+	L[j*N + i] = A[j*N + i];
+    }
+  }
+    
+  for (int i = 0; i < N; i++) {
+    for (int j = i; j < N; j++) {
+      U[j*N + i] = A[j*N + i];
+    }
+  }
+    
+  init_matrix(N, N, A, 1);
+  mycblas_dgemm_scalaire(CblasRowMajor, CblasNoTrans,
+			 CblasNoTrans, N, N,
+			 N, 1, L,
+			 N, U, N,
+			 0, A, N);
+  int res = check_matrix(check, A, N, N);
+
+  return res;
 }
 
 /*************Test main*************/
