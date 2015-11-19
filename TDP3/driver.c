@@ -172,7 +172,7 @@ int test_dgetrf2(){
     memcpy(check, A, N*N*sizeof(double));
 
     mycblas_dgetrf(N, N, A, N, ipiv, &info);
-    affiche(N,N,A,N,stdout);
+    
     double *L = alloc_matrix(N , N);
     double *U = alloc_matrix(N , N);
     for (int i = 0; i < N; i++) {
@@ -205,7 +205,7 @@ int test_dgetrf2(){
 
 int test_dgesv(){
     int Na = 8;
-	int Nb = 2;
+	int Nb = 1;
 	double A[] = {5,-8,4,3,0,-6,-1,-10,
 		      -7,7,-5.5555555555555555,0,-9,7,0,-7,
 		      2.4444444444444444,-10,-4,-5,-2,7,5,-8,
@@ -215,22 +215,21 @@ int test_dgesv(){
 		      4,6,-2,-2,5,-2,7,5,
 		      -3,1.7777777777777777,10,-9,10,-9.9999999999999999,4,6};
     
-	double B[] = {-5.2,3,5.1,-8.1,71,-9.45,-45.32,12,
-		      12.3,-8,-8.23,12.5,48.6,-2.3,9.12,45};
+	double B[] = {-5.2,3,5.1,-8.1,71,-9.45,-45.32,12};
 	double *C = calloc(Na*Nb, sizeof(double));
+	double *Acopy = calloc(Na*Na, sizeof(double));
 	double *check = malloc(sizeof(double) * Na*Nb);
 	memcpy(check,B, sizeof(double) * Na*Nb);
+	memcpy(Acopy,A, sizeof(double) * Na*Na);
 
 	mycblas_dgesv(Na, Nb, A, Na, NULL, B, Na, NULL);
-
+	
 	mycblas_dgemm_scalaire(CblasRowMajor, CblasNoTrans,
-			       CblasNoTrans, Na, Nb, Na, 1.0, A, Na, B, Na, 0.0, C, Na);
-
+			       CblasNoTrans, Na, Nb, Na, 1.0, Acopy, Na, B, Na, 0.0, C, Na);
+	
 	int ret = check_matrix(check, C, Na, Nb) ;
-	affiche(Na,Nb,B,Na,stdout);
-	printf("\n");
-	affiche(Na,Nb,check,Na,stdout);
 	free(C);
+	free(Acopy);
 	free(check);
 	return ret;
     }
