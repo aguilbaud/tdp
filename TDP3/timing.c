@@ -29,9 +29,10 @@ void timing_cblas_dgetf2_nopiv(){
 }
 
 
+/******************************************************/
 typedef struct{
     void(*fun)(void);
-	char *msg;
+    char *msg;
 }timing_function_t;
 
 

@@ -10,11 +10,11 @@
 
 /**********Checking functions************/
 int check_vector(double *exp, double *res, int N){
-  for (int i = 0; i < N; i++) {
-    if( (fabs(res[i]-exp[i])/fabs(exp[i]) < ERROR_BOUND) == 0)
-      return 0;
-  }
-  return 1;
+    for (int i = 0; i < N; i++) {
+	if( (fabs(res[i]-exp[i])/fabs(exp[i]) < ERROR_BOUND) == 0)
+	    return 0;
+    }
+    return 1;
 }
 
 int check_matrix(double *exp, double *res, int M, int N){
@@ -99,115 +99,149 @@ int test_cblas_dgetf2_nopiv(){
     return res; 
 }
 
-int test_cblas_dtrsv_upper(){
-  const int N = 3;
-  double A[] = {2,3,4,5,2,1,7,4,2};
-  double x[] = {-4, 5, 6};
-  double check[] = {-3.75, -3.5, 3};
 
-  mycblas_dtrsv(CblasRowMajor, CblasUpper, CblasNoTrans, CblasNonUnit, N, A, N, x, 1);
-  return check_vector(check, x, N);    
+int test_cblas_dtrsv_upper(){
+    const int N = 3;
+    double A[] = {2,3,4,5,2,1,7,4,2};
+    double x[] = {-4, 5, 6};
+    double check[] = {-3.75, -3.5, 3};
+
+    mycblas_dtrsv(CblasRowMajor, CblasUpper, CblasNoTrans, CblasNonUnit, N, A, N, x, 1);
+    return check_vector(check, x, N);    
 }
 
 int test_cblas_dtrsv_lower(){
-  const int N = 3;
-  double A[] = {2,3,4,5,2,1,7,4,2};
-  double x[] = {-4, 5, 6};
-  double check[] = {-4, 17, 5};
+    const int N = 3;
+	double A[] = {2,3,4,5,2,1,7,4,2};
+	double x[] = {-4, 5, 6};
+	double check[] = {-4, 17, 5};
 
-  mycblas_dtrsv(CblasRowMajor, CblasLower, CblasNoTrans, CblasUnit, N, A, N, x, 1);
-  return check_vector(check, x, N);    
-}
+	mycblas_dtrsv(CblasRowMajor, CblasLower, CblasNoTrans, CblasUnit, N, A, N, x, 1);
+	return check_vector(check, x, N);    
+    }
 
 int test_cblas_dtrsm_upper(){
-  const int N = 3;
-  double A[] = {2,3,4,5,2,1,7,4,2};
-  double X[] = {-1,-5,3,2,7,-2,4,-1,1};
-  double check[] = {8,-5.5,1.5,-9.25,5.5,-1,4,-1.5,0.5};
+    const int N = 3;
+    double A[] = {2,3,4,5,2,1,7,4,2};
+    double X[] = {-1,-5,3,2,7,-2,4,-1,1};
+    double check[] = {8,-5.5,1.5,-9.25,5.5,-1,4,-1.5,0.5};
     
-  mycblas_dtrsm(CblasRowMajor, CblasLeft, CblasUpper, CblasNoTrans, CblasNonUnit, N, N, 1.0, A, N, X, N);
-  return check_matrix(check, X, N, N);    
+    mycblas_dtrsm(CblasRowMajor, CblasLeft, CblasUpper, CblasNoTrans, CblasNonUnit, N, N, 1.0, A, N, X, N);
+    return check_matrix(check, X, N, N);    
 
 }
 
 int test_cblas_dtrsm_lower(){
-  const int N = 3;
-  double A[] = {2,3,4,5,2,1,7,4,2};
-  double X[] = {-1,-5,3,2,7,-2,4,-1,-1};
-  double check[] = {-1,-2,9,2,1,-11,4,-13,-4};
+    const int N = 3;
+    double A[] = {2,3,4,5,2,1,7,4,2};
+    double X[] = {-1,-5,3,2,7,-2,4,-1,-1};
+    double check[] = {-1,-2,9,2,1,-11,4,-13,-4};
     
-  mycblas_dtrsm(CblasRowMajor, CblasLeft, CblasLower, CblasNoTrans, CblasUnit, N, N, 1.0, A, N, X, N);
-  return check_matrix(check, X, N, N);        
+    mycblas_dtrsm(CblasRowMajor, CblasLeft, CblasLower, CblasNoTrans, CblasUnit, N, N, 1.0, A, N, X, N);
+    return check_matrix(check, X, N, N);        
 }
 
 int test_dgetrf(){
-  int N = 3;
-  double A[] = {2,3,4,5,2,1,7,4,2};
-  double B[] = {2,3,4,5,2,1,7,4,2};
-  int ipiv[3];
-  int info;
+    int N = 3;
+    double A[] = {2,3,4,5,2,1,7,4,2};
+    double B[] = {2,3,4,5,2,1,7,4,2};
+    int ipiv[3];
+    int info;
   
-  mycblas_dgetf2_nopiv(N, N, A, N);  
-  mycblas_dgetrf(N, N, B, N, ipiv, &info);
+    mycblas_dgetf2_nopiv(N, N, A, N);  
+    mycblas_dgetrf(N, N, B, N, ipiv, &info);
 
-  return check_matrix(A, B, N, N);
+    return check_matrix(A, B, N, N);
 }
 
 int test_dgetrf2(){
-  int N=8;
-  double A[] = {5,-8,4,3,0,-6,-1,-10,
-		-7,7,-5.5555555555555555,0,-9,7,0,-7,
-		2.4444444444444444,-10,-4,-5,-2,7,5,-8,
-		8,-1.1111111111111111,0,1,-5,9,8,1,
-		7,1,-1,1,-6,-8,3,8.8888888888888888,
-		-1,-1,-3,-6.6666666666666666,7.7777777777777777,6,2,4,
-		-3,1.7777777777777777,10,-9,10,-9.9999999999999999,4,6};
+    int N=8;
+    double A[] = {5,-8,4,3,0,-6,-1,-10,
+		  -7,7,-5.5555555555555555,0,-9,7,0,-7,
+		  2.4444444444444444,-10,-4,-5,-2,7,5,-8,
+		  8,-1.1111111111111111,0,1,-5,9,8,1,
+		  7,1,-1,1,-6,-8,3,8.8888888888888888,
+		  -1,-1,-3,-6.6666666666666666,7.7777777777777777,6,2,4,
+		  -3,1.7777777777777777,10,-9,10,-9.9999999999999999,4,6};
 
-  double *A2  = malloc(sizeof(double)*8*8);
-  memcpy(A2, &A, sizeof(double)*8*8);
-  int ipiv[3];
-  int info;
+    double *A2  = malloc(sizeof(double)*8*8);
+    memcpy(A2, &A, sizeof(double)*8*8);
+    int ipiv[3];
+    int info;
 
-  mycblas_dgetrf(N, N, A2, N, ipiv, &info);
+    mycblas_dgetrf(N, N, A2, N, ipiv, &info);
 
-  free(A2);
-  return 0;
+    free(A2);
+    return 0;
 }
+
+/* int test_dgesv(){ */
+/*     const int N = 5; */
+/*     double *A = alloc_matrix(N, N); */
+/*     double *B = alloc_vector(N); */
+/*     double *check = alloc_vector(N); */
+
+/*     //Filling A */
+/*     for (int i = 0; i < N-1; i++) { */
+/* 	A[(i+1)*N + i] = i+1; */
+/*     } */
+/*     for (int i = 0; i < N; i++) { */
+/* 	A[i] = 1; */
+/*     } */
+/*     //Filling B */
+/*     for (int i = 0; i < N-1; i++) { */
+/* 	B[i] = i+2; */
+/* 	check[i] = 1; */
+/*     } */
+/*     B[N-1] = 1; */
+/*     check[N-1] = 1; */
+    
+/*     mycblas_dgesv(N, 1, A, N, NULL, B, 1, NULL); */
+
+/*     int ret = check_matrix(check, B, N, N) ; */
+/*     affiche(N,1,B,N,stdout); */
+/*     free(A); */
+/*     free(B); */
+/*     free(check); */
+/*     return ret; */
+/* } */
+
 
 /*************Test main*************/
 typedef struct{
-  int(*fun)(void);
-  char *msg;
+    int(*fun)(void);
+    char *msg;
 }test_function_t;
 
 
 test_function_t init_test(int (*fun)(void),char *msg){
-  test_function_t tf;
-  tf.fun = fun;
-  tf.msg = msg;
-  return tf;
-}
+    test_function_t tf;
+	tf.fun = fun;
+	tf.msg = msg;
+	return tf;
+    }
 
 int main(int argc, char *argv[])
-    {
-      const int NB_TESTS = 9;
-      test_function_t tests[] = {init_test(test_cblas_dscal,"DSCAL TEST"), 
-				 init_test(test_cblas_dger, "DGER TEST"),
-				 init_test(test_cblas_dgetf2_nopiv, "DGETF NO PIV"),
-				 init_test(test_cblas_dtrsv_upper, "DTRSV UPPER"),
-				 init_test(test_cblas_dtrsv_lower, "DTRSV LOWER"),
-				 init_test(test_cblas_dtrsm_upper, "DTRSM UPPER"),
-				 init_test(test_cblas_dtrsm_lower, "DTRSM LOWER"),
-				 init_test(test_dgetrf, "DGETRF TEST"),
-        			 init_test(test_dgetrf2, "DGETRF2 TEST")};
-      int ret;
-      int passed = 0;
+{
 
-      for(int i=0; i<NB_TESTS; i++){
+    const int NB_TESTS = 9;
+    test_function_t tests[] = {init_test(test_cblas_dscal,"DSCAL TEST"), 
+			       init_test(test_cblas_dger, "DGER TEST"),
+			       init_test(test_cblas_dgetf2_nopiv, "DGETF NO PIV"),
+			       init_test(test_cblas_dtrsv_upper, "DTRSV UPPER"),
+			       init_test(test_cblas_dtrsv_lower, "DTRSV LOWER"),
+			       init_test(test_cblas_dtrsm_upper, "DTRSM UPPER"),
+			       init_test(test_cblas_dtrsm_lower, "DTRSM LOWER"),
+			       init_test(test_dgetrf, "DGETRF TEST"),
+			       init_test(test_dgetrf2, "DGETRF2 TEST")};
+    int ret;
+    int passed = 0;
+
+    for(int i=0; i<NB_TESTS; i++){
 	ret = tests[i].fun();
 	passed+=ret;
 	printf("%-25s%6s\n", tests[i].msg, (!ret)?"\033[31;1mFAILED\033[0m":"\033[32;1mPASSED\033[0m");
-      }
-      printf("\n%d out of %d tests passed.\033[0m\n",passed,NB_TESTS);
-      return 0;
     }
+    printf("\n%d out of %d tests passed.\033[0m\n",passed,NB_TESTS);
+    return 0;
+}

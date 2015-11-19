@@ -11,20 +11,18 @@ void mycblas_dgetrf(const int M, const int N, double *A, const int lda, int *ipi
 			      MIN(BLOCK_SIZE,N-(BLOCK_SIZE*j)), 
 			      A + (M*j*BLOCK_SIZE + j*BLOCK_SIZE), 
 			      M);
-	if(j==0)
-       	  affiche(M, N, A, lda, stdout);
 	if(j<M-BLOCK_SIZE){
 		   
-	  mycblas_dtrsm(CblasColMajor, CblasLeft, CblasLower, CblasNoTrans, CblasUnit,
-			BLOCK_SIZE, N-(BLOCK_SIZE * (j+1)), 1,
-			A + (M*j*BLOCK_SIZE + j*BLOCK_SIZE), M,
-			A + (M*j*BLOCK_SIZE + j*BLOCK_SIZE + M*BLOCK_SIZE), M);
+	    mycblas_dtrsm(CblasColMajor, CblasLeft, CblasLower, CblasNoTrans, CblasUnit,
+			  BLOCK_SIZE, N-(BLOCK_SIZE * (j+1)), 1,
+			  A + (M*j*BLOCK_SIZE + j*BLOCK_SIZE), M,
+			  A + (M*j*BLOCK_SIZE + j*BLOCK_SIZE + M*BLOCK_SIZE), M);
 
-	  mycblas_dgemm_scalaire(CblasColMajor, CblasNoTrans, CblasNoTrans,
-				 M-((j+1)*BLOCK_SIZE), N-((j+1)*BLOCK_SIZE), BLOCK_SIZE,
-				 -1, A + (M*j*BLOCK_SIZE + j*BLOCK_SIZE + BLOCK_SIZE), M,
-				 A + (M*(j+1)*BLOCK_SIZE + j*BLOCK_SIZE), M, 1,
-				 A + (M*(j+1)*BLOCK_SIZE + (j+1)*BLOCK_SIZE), M);
+	    mycblas_dgemm_scalaire(CblasColMajor, CblasNoTrans, CblasNoTrans,
+				   M-((j+1)*BLOCK_SIZE), N-((j+1)*BLOCK_SIZE), BLOCK_SIZE,
+				   -1, A + (M*j*BLOCK_SIZE + j*BLOCK_SIZE + BLOCK_SIZE), M,
+				   A + (M*(j+1)*BLOCK_SIZE + j*BLOCK_SIZE), M, 1,
+				   A + (M*(j+1)*BLOCK_SIZE + (j+1)*BLOCK_SIZE), M);
 	}
     }
 }

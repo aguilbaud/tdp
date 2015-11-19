@@ -7,6 +7,12 @@ void mycblas_dtrsv(const enum CBLAS_ORDER order, const enum CBLAS_UPLO Uplo,
 		   const int N, const double *A, const int lda, double *X,
 		   const int incX);
 
+void mycblas_dgemm(const enum CBLAS_ORDER Order, const enum CBLAS_TRANSPOSE TransA,
+		   const enum CBLAS_TRANSPOSE TransB, const int M, const int N,
+		   const int K, const double alpha, const double *A,
+		   const int lda, const double *B, const int ldb,
+		   const double beta, double *C, const int ldc);
+
 void mycblas_dgemm_block(const int M, const int N, const int K,
 			 const double *A, const int lda, 
 			 const double *B, const int ldb,
@@ -36,5 +42,10 @@ void mycblas_dtrsm(const enum CBLAS_ORDER Order, const enum CBLAS_SIDE Side,
 		   const enum CBLAS_DIAG Diag, const int M, const int N,
 		   const double alpha, const double *A, const int lda,
 		   double *B, const int ldb);
+
+
+/**************************************************/
+
+void lu_mpi(const int M, const int N, double *A, const int lda, int *ipiv, int *info);
 
 #endif /* MYCBLAS_H */

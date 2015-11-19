@@ -1,0 +1,79 @@
+\documentclass{article}
+\usepackage[francais]{babel}
+\usepackage[utf8]{inputenc}  
+\usepackage{listings}
+\usepackage{graphicx}
+\usepackage{color}
+\usepackage{float}
+\usepackage{algorithm}
+\usepackage[noend]{algpseudocode}
+
+% Style for c code
+\definecolor{mygreen}{rgb}{0,0.6,0}
+\definecolor{gray}{rgb}{0.5,0.5,0.5}
+\definecolor{mymauve}{rgb}{0.58,0,0.82}
+\definecolor{backcolour}{rgb}{0.95,0.95,0.92}
+
+\lstdefinestyle{cstyle}{ 
+  language=C,
+  backgroundcolor=\color{backcolour},   
+  basicstyle=\footnotesize,        % the size of the fonts that are used for the code
+  captionpos=b,                    % sets the caption-position to bottom
+  commentstyle=\color{mygreen},    % comment style
+  deletekeywords={...},            % if you want to delete keywords from the given language
+  escapeinside={\%*}{*)},          % if you want to add LaTeX within your code
+  keepspaces=true,                
+  keywordstyle=\color{blue},       % keyword style
+  otherkeywords={*,...},           % if you want to add more keywords to the set
+  numbers=left,                   
+  numbersep=5pt,                   % how far the line-numbers are from the code
+  numberstyle=\tiny\color{gray}, % the style that is used for the line-numbers
+  rulecolor=\color{black},        
+  showspaces=false,               
+  showstringspaces=false,          % underline spaces within strings only
+  showtabs=false,                  % show tabs within strings adding particular underscores
+  stepnumber=1,                    % the step between two line-numbers. If it's 1, each line will be numbered
+  stringstyle=\color{mymauve},     % string literal style
+  tabsize=2,	                   % sets default tabsize to 2 spaces
+  title=\lstname                   % show the filename of files included with \lstinputlisting; also try caption instead of title
+}
+
+\lstset{style=cstyle}
+
+\title{Factorisation LU et descente-remontée}
+\author{Benjamin \bsc{Angelaud} - Adrien \bsc{Guilbaud}}
+\begin{document}
+\maketitle
+
+\section{Version MPI}
+\subsection{Factorisation LU}
+Dans un premier temps, nous créons un buffer local à chaque processus qui contient ses colonnes locales selon une distribution en serpentin. Cela permet de rassembler chaque bloc-colonne de façon contigüe en mémoire évitant ainsi les cach-miss provoqués par le parcours la matrice initiale.
+
+\paragraph{}
+Dans l'algo permettant la factorisation LU, (algo \ref{algo:lu}), nous parcourons tous les bloc-colonnes; quand un bloc appartient à notre processus, nous faisons un dgetrf entre le bloc courant et tous nos autres blocs situé à droite. Nous envoyons ensuite notre bloc courant à tous les processus possédant des blocs à droite pour qu'ils mettent à jour leurs blocs. 
+
+\begin{algorithm}
+  \caption{Facto LU MPI}\label{algo:lu}
+  \begin{algorithmic}[1]
+    \State $ loc\_k $ = $ 0 $
+    \For{ $k = 0$ to $k=nb\_blocs\_colonnes-1$ }  
+    \If {$ is\_local\_bloc(k)$ }
+    \State $ mycblas\_dgetrf(local\_bloc[loc\_k]) $
+    \State $ broadcast(local\_bloc[loc\_k]) $
+    \State $ loc\_k $ = $ loc\_k + 1 $
+    \Else
+    \State $ recevoir(distant\_bloc) $
+    \State $ mycblas\_dtrsm(distant\_bloc, local\_bloc) $
+    \State $ mycblas\_dgemm(distant\_bloc, local\_bloc) $
+    \EndIf
+    \EndFor
+
+  \end{algorithmic}
+\end{algorithm}
+
+
+\subsection{Descente-remontée}
+
+\section{Améliorations possible}
+La factorisation LU en MPI ne marche que si l'ordre de la matrice est divisible par la taille d'un bloc. Il faudrait donc gérer le cas où il reste un morceau de matrice à attribuer à un processus.
+\end{document}
