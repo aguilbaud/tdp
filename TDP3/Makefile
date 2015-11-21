@@ -39,6 +39,6 @@ check-syntax:
 	$(MPI) -o nul $(CFLAGS) -S ${CHK_SOURCES}
 
 clean: 
-	rm *.o driver timing driver_mpi
+	rm *.o driver timing driver_mpi timing_mpi
 
 

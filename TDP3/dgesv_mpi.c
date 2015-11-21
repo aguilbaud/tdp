@@ -6,7 +6,7 @@
 #include "util.h"
 
 
-#define BLOCK_SIZE 1 //Number of colums per threads
+#define BLOCK_SIZE 2 //Number of colums per threads
 
 
 
@@ -53,7 +53,7 @@ void dgetrf_mpi(int K, int loc_nb_bloc_colums, MPI_Datatype BLOCK_COLUMN_TYPE,do
 	    double * A_dgetf2 = A_loc + (loc_k*BLOCK_SIZE*lda) + (k * BLOCK_SIZE);
 	    // printf("dgetf2: M:%d, N:%d, A:%d\n", M_dgetf2, N_dgetf2, (loc_k*BLOCK_SIZE*lda) + (k * BLOCK_SIZE));
 	    mycblas_dgetf2_nopiv(M_dgetf2, N_dgetf2, A_dgetf2, lda);
-	    
+	    MPI_Bcast( A_loc  + (loc_k*BLOCK_SIZE*lda), 1, BLOCK_COLUMN_TYPE, comm_rank, MPI_COMM_WORLD);
 	    if(loc_k + 1 < loc_nb_bloc_colums){//peut etres pas bonne condition (voir avec loc_k)
 		int M_dtrsm = BLOCK_SIZE;
 		int N_dtrsm = (loc_nb_bloc_colums - loc_k - 1)*BLOCK_SIZE;
@@ -82,7 +82,7 @@ void dgetrf_mpi(int K, int loc_nb_bloc_colums, MPI_Datatype BLOCK_COLUMN_TYPE,do
 	    //Pour tous les processeurs qui possédent une colonne à droite
 	    //printf("Bcast send=> rank: %d, k: %d, cond: %d\n", comm_rank, k,k < K-1 );
 	    //if(k < K-1)
-	    MPI_Bcast( A_loc  + (loc_k*BLOCK_SIZE*lda), 1, BLOCK_COLUMN_TYPE, comm_rank, MPI_COMM_WORLD);
+	    
 	    loc_k++;
 	    /* TODO: Envoyer num de ligne pivot */	    
 	}

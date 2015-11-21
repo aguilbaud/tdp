@@ -91,31 +91,31 @@ void timing_cblas_dgetrf(){
 /******************************************************/
 typedef struct{
     void(*fun)(void);
-	char *msg;
-    }timing_function_t;
+    char *msg;
+}timing_function_t;
 
 
-    timing_function_t init_test(void (*fun)(void),char *msg){
-	timing_function_t tf;
-	tf.fun = fun;
-	tf.msg = msg;
-	return tf;
+timing_function_t init_test(void (*fun)(void),char *msg){
+    timing_function_t tf;
+    tf.fun = fun;
+    tf.msg = msg;
+    return tf;
+}
+
+int main(){
+
+    int NB_TESTS = 3;
+    timing_function_t tests[] = {init_test(timing_cblas_dgetf2_nopiv, "DGETF2 TIMING"),
+				 init_test(timing_cblas_dger, "DGER TIMING"),
+				 init_test(timing_cblas_dgetrf, "DGETRF TIMING")
+    }; 
+
+
+
+    for(int i=0; i<NB_TESTS; i++){
+	printf("%s\n",tests[i].msg);
+	tests[i].fun();
     }
-
-    int main(){
-
-	int NB_TESTS = 1;
-	timing_function_t tests[] = {//init_test(timing_cblas_dgetf2_nopiv, "DGETF2 TIMING"),
-	    //init_test(timing_cblas_dger, "DGER TIMING")
-	    init_test(timing_cblas_dgetrf, "DGETRF TIMING")
-	}; 
-
-
-
-	for(int i=0; i<NB_TESTS; i++){
-	    printf("%s\n",tests[i].msg);
-	    tests[i].fun();
-	}
     
-	return 0;
-    }
+    return 0;
+}

@@ -16,7 +16,7 @@ int main(int argc, char *argv[])
     MPI_Comm_size(MPI_COMM_WORLD, &comm_size);
     MPI_Comm_rank(MPI_COMM_WORLD, &comm_rank);	
  
-    int N = 24;
+    int N = 8;
     double *A = alloc_matrix(N, N);
     init_matrix(N, N, A, 0);
     
@@ -27,7 +27,7 @@ int main(int argc, char *argv[])
     double global_time;
     MPI_Reduce(&local_time, &global_time, 1, MPI_DOUBLE, MPI_MAX, 0, MPI_COMM_WORLD);
     if(comm_rank == 0)
-	printf("%d %f seconds\n", N, global_time);
+	printf("%d %f\n", comm_size, global_time);
  
     MPI_Finalize();
  

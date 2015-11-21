@@ -33,9 +33,8 @@ int check_matrix(double *exp, double *res, int M, int N){
     }
     
     double frobenius_norm_res = sqrt(sum_res);
-    printf("%f\n",sum_exp);
     double frobenius_norm_exp = sqrt(sum_exp);    
-    printf("%20.20f %20.20f\n", frobenius_norm_exp, frobenius_norm_res);
+    //printf("%20.20f %20.20f\n", frobenius_norm_exp, frobenius_norm_res);
     test_res = (fabs(frobenius_norm_res-frobenius_norm_exp)/frobenius_norm_exp < ERROR_BOUND);
     if(!test_res){
 	return 0;
