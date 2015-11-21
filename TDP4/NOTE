@@ -1,0 +1,71 @@
+Multiplication de fox
+obj: mltiplication de matrices dans environnement distribué
+on fixe des contraintes de dimensions(matrice) et nb de processus
+
+C=AB AetB carrées, non transposées, même dimensions (lda=ldb=ldc=m)
+
+Séquentiel: (*1)
+Pour comparer résultats (TDP1 ou MKL)
+
+(*2)
+
+Initialisation:
+- un proc (rank 0) connaît A et B
+- repartir A et B sur tous les procs
+-un proc a: Aij Bij Cij avec i indice de ligne, j indice de colonne (dans la grille 2D des procs)
+
+Algo à l'étape k:
+pour chaque ligne i, le proc (i, (i+k)%N) broadcast sur la ligne Ai(i+k)%N
+un proc (i,j) doit détenir:
+   Cij
+   Ai,(i+k)%N
+   B(i+k)%N,j
+   Sauvegarde Aij
+
+le bloc B(i+k)%N,j est envoyé au dessus
+
+(Ex)
+
+Algo dist:
+Topologie cartésienne MPI:
+	  Mpi_Cart_create()
+	  Mpi_cart_sub();
+	  mpi_comm_create();
+	  scatterv()
+
+Type de données:
+     MPI_Type_vector();
+     MPI_Type_extent();
+     MPI_Type_create_resized();
+
+Calculs:
+	pour une étape de calcul:
+	     un bcast
+	     GEMM (MKL/TP1)
+	     Echange des Bij
+
+MPI_Sendrecv_replace() // Comparer avec send recv classique (normalement sendrecv_repace better)
+
+Pour finir, on veut récupérer C sur le rank 0 (MPI_Gatherv())
+
+
+Rendu: 
+
+Entrée: file
+n
+l0 .. 
+l1 ..
+l2 ..
+...
+ln-1
+
+*Validation vs séquentielle
+*1 fct distribution data
+*1 fct calcul
+*1 fct regroupement des data + C
+
+Perf: test scalabilité	| global et 
+      temps 		| aussi fct par fct
+
+*Pourquoi ne fait-on pas Cij = sum Aik Bkj ?
+*ATTENTION aux contraintes d'entrées
