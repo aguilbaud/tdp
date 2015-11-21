@@ -1,11 +1,11 @@
 CC=mpicc
-CFLAGS=-g -std=gnu99 -Wall
+CFLAGS=-O2 -std=gnu99 -Wall
 LDFLAGS=-lm
 MPI = mpicc
 OBJ= $(SRC:.c=.o)
 
 
-all: driver timing driver_mpi 
+all: driver timing driver_mpi timing_mpi
 
 driver_mpi: driver_mpi.c dgesv_mpi.o util.o dgetf2.o dger.o dscal.o dtrsv.o dgemm.o
 	$(CC) $(CFLAGS) -o driver_mpi driver_mpi.c dgesv_mpi.o util.c dgetf2.o dger.o dscal.o dtrsm.o dtrsv.o dgemm.o -lm 
@@ -13,8 +13,11 @@ driver_mpi: driver_mpi.c dgesv_mpi.o util.o dgetf2.o dger.o dscal.o dtrsv.o dgem
 driver: driver.c util.o dgetf2.o dgemm.o dtrsv.o dtrsm.o dgesv.o dgetrf.o dscal.o dger.o 
 	$(CC) $(CFLAGS) -o driver driver.c util.o dgemm.o dtrsv.o dtrsm.o dgesv.o dgetrf.o dscal.o dger.o dgetf2.o -lm
 
-timing: timing.c dgetf2.o util.o perf.o dscal.o dger.o
-	$(CC) $(CFLAGS) -o timing timing.c dgetf2.o util.o perf.o dscal.o dger.o
+timing: timing.c dgetf2.o util.o perf.o dscal.o dger.o dgetrf.o dtrsm.o dgemm.o dtrsv.o
+	$(CC) $(CFLAGS) -o timing timing.c dgetf2.o util.o perf.o dscal.o dger.o dtrsv.o dgetrf.o dtrsm.o dgemm.o
+
+timing_mpi: timing_mpi.c dgesv_mpi.o util.o dgetf2.o dger.o dscal.o dtrsv.o dgemm.o
+	$(CC) $(CFLAGS) -o timing_mpi timing_mpi.c dgesv_mpi.o util.c dgetf2.o dger.o dscal.o dtrsm.o dtrsv.o dgemm.o -lm 
 
 
 dgesv_mpi.o: dgesv_mpi.c mycblas.h dgetf2.c dtrsm.c dger.c dscal.c dtrsv.c dgemm.c 
