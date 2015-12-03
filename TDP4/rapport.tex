@@ -1,0 +1,108 @@
+\documentclass[12pt]{article}
+\usepackage[francais]{babel}
+\usepackage[utf8]{inputenc}  
+\usepackage{listings}
+\usepackage{graphicx}
+\usepackage{color}
+\usepackage{float}
+\usepackage{algorithm}
+\usepackage[noend]{algpseudocode}
+\usepackage{amsmath}
+\usepackage{array}
+\usepackage{colortbl}
+\usepackage[dvipsnames]{xcolor}
+
+\title{Multiplication de matrices - Algorithme de Fox}
+\author{Benjamin \bsc{Angelaud} - Adrien \bsc{Guilbaud}}
+\begin{document}
+\maketitle
+
+\section{Introduction}
+L'objectif est de réaliser des multiplications matricielles dans un environnement distribué. Pour cela, nous utilisons l'algorithme de Fox. Cet algorithme procède en $n$ étapes.
+
+$$
+\begin{tabular}{ccc}
+
+  Broadcast & Calculs & Shift
+  \\
+
+  \begin{tabular}{ccc}
+    \color{cyan} $\mathbf{A_{11}} \rightarrow$  & $A_{12}$ & $A_{13}$ \\
+    $A_{21}$ & \color{cyan} $\leftarrow \mathbf{A_{22}} \rightarrow$ & $A_{23}$ \\
+    $A_{31}$ & $A_{32}$ & \color{cyan} $ \leftarrow \mathbf{A_{33}}$ \\
+  \end{tabular}
+            &
+              \begin{tabular}{ccc}
+                \color{cyan} $\mathbf{A_{11}}$ & $A_{12}$ & $A_{13}$ \\
+                $A_{21}$ & \color{cyan} $\mathbf{A_{22}}$ & $A_{23}$ \\
+                $A_{31}$ & $A_{32}$ & \color{cyan} $\mathbf{A_{33}}$ \\
+              \end{tabular}
+            &
+              \begin{tabular}{ccc}
+                $B_{11}\uparrow$ & $B_{12}\uparrow$ & $B_{13}\uparrow$ \\
+                $B_{21}\uparrow$ & $B_{22}\uparrow$ & $B_{23}\uparrow$ \\
+                $B_{31}\uparrow$ & $B_{32}\uparrow$ & $B_{33}\uparrow$ \\
+              \end{tabular}
+\end{tabular}
+$$
+
+\paragraph{}Nous nous limiterons à des matrices carrées, non transposées de mêmes dimensions. En prenant compte de ces contraintes, nous devons vérifier que le programme respecte les conditions suivantes:
+\begin{itemize}
+\item pour $p$ processus, $\sqrt{p}$ doit être un entier,
+\item pour une matrice $N \times N$, $n= \frac{N}{\sqrt{p}} $ donne la taille des blocs et doit être un entier.
+\end{itemize}
+
+\section{Implémentation} \label{s:impl}
+Nous avons créé 3 fonctions principales:
+\begin{itemize}
+\item $fox\_scatter$: permet de diviser les matrices entre tous les processus,
+\item $fox\_compute$: réalise les calculs et les communications,
+\item $fox\_gather$: rassemble les différentes sous-matrices résultats en une seule matrice.
+\end{itemize}
+
+\paragraph{}
+En plus de ces 3 fonctions constituant le coeur de l'algorithme de Fox, nous avons également 2 autres fonctions permettant la création de la grille 2D des processus et des communicateurs associés, ainsi que la création d'un type de donnée ``sous-matrice''.
+
+\paragraph{Type de donnée}
+Nous avons créé un type de donnée représentant une sous-matrice de taille $n\times n$ pour faciliter l'éclatement des matrices utilisées. Le problème est que les cases grises (fig \ref{fig:datatype}) font partie de ce type. Pour remédier à ça, nous avons modifié l'extent du type pour qu'il contienne exactement le bon nombre d'éléments. 
+
+
+\begin{figure}[ht]
+  \centering
+  \begin{tabular}{|c|c||c|c|}
+    \hline
+    \cellcolor{green}& \cellcolor{green} & & \\ 
+    \hline
+    \cellcolor{green}& \cellcolor{green}& & \\ 
+    \hline
+    \hline
+    \cellcolor{gray}& & & \\ 
+    \hline
+    \cellcolor{gray}& & & \\ 
+    \hline
+  \end{tabular}
+  \caption{\label{fig:datatype} Type de donnée avec extent de base}
+\end{figure}
+
+
+\paragraph{Grille de processus}
+Une fois que les fichiers contenant les matrices sont lus, nous pouvons créer la grille de processus. En plus de la grille, nous créons des communicateurs sur chaque ligne qui faciliterons le broadcast des blocs.
+
+\paragraph{Calcul}
+Nous avons vu que cet algorithme s'effectue en $n$ étapes. Pour chaque étape $k$, les processus d'une ligne $i$ participent au broadcast du bloc $A_{i,(i+k)\%n}$. Il faut ensuite effectuer un dgemm classique entre les blocs $A$ et $B$ locaux (lors de la 1\iere{} étape, le $B$ correspond au bloc reçu lors du $fox\_scatter$). Pour finir, chaque processus envoie son bloc $B$ local à son voisin du dessus grâce à la fonction $MPI\_Cart\_shift$.
+
+\section{Tests}
+Tous les tests suivants, notamment les tests de performance, ont été exécutés sur la machine PlaFRIM. Nous mesurons le temps d'exécution des 3 fonctions principales présentées en section \ref{s:impl} grâce à la fonction $MPI\_Wtime$ pour chaque processus, puis nous gardons la valeurs la plus élevée pour tracer les courbes.
+
+\subsection{Tests unitaires}
+
+\subsection{Tests de performance}
+Avant l'appel de la fonction $fox$ dans les fonctions de tests présentes dans le fichiers $timing\_fox$, nous avons mis une barrière avant de ne pas mesurer le temps de chargement des matrices effectué par un unique processus.
+
+\paragraph{Choix de la méthode de communication}
+Dans la fonction $fox\_compute$, les communications permettant l'échange des blocs de $B$ à travers la grille se font grâce à des Isend/Irecv classiques (les communications sont non-bloquantes pour éviter les inter-blocages). Cependant, il est possible d'utiliser la fonction $MPI\_Sendrecv\_replace$ qui permet l'envoi et la réception grâce à un unique buffer. Nous avons donc comparé l'utilisation de ces 2 fonctions.
+
+
+\section{Passage à l'échelle}
+
+\end{document}
