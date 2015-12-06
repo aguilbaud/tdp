@@ -61,6 +61,7 @@ int test_fox_mpi(int dim){
 	C = load_file(fp, &nc);
 	fclose(fp);
 	
+	
 	if(na!=nb || nb!=nc || na!=nc){
 	    fprintf(stderr, "Abort: Matrix have to be of the same order\n");
 	    MPI_Abort(MPI_COMM_WORLD, -1);
@@ -69,6 +70,7 @@ int test_fox_mpi(int dim){
 	
 	N=na;
 	loc_N = N/dim;
+	printf("%d %d \n", N, loc_N);
 	if(loc_N * dim != N){
 	    fprintf(stderr, "Bad\n");
 	    free(A); free(B); free(C);
@@ -82,67 +84,69 @@ int test_fox_mpi(int dim){
 
     fox(A, B, C, loc_N, dim);
     
+
     if(comm_rank == 0){
+	
 	mycblas_dgemm_scalaire(CblasColMajor, CblasNoTrans, CblasNoTrans, N, N, N, 
 			       1.0, A, N, B, N, 0.0, C_bis, N);
+
 	
 	int res = check_matrix(C_bis, C, N, N);
-	free(A); free(B); free(C);
+	free(A); free(B); free(C); free(C_bis);
 	return res;
     }
     
-    free(A); free(B); free(C);
+    free(A); free(B); free(C); free(C_bis);
     return -1;
 }
 
 typedef struct{
     int(*fun)(int);
-	char *msg;
-    }test_function_t;
+    char *msg;
+}test_function_t;
 
 
-    test_function_t init_test(int (*fun)(int),char *msg){
-	test_function_t tf;
-	tf.fun = fun;
-	tf.msg = msg;
-	return tf;
-    }
+test_function_t init_test(int (*fun)(int),char *msg){
+    test_function_t tf;
+    tf.fun = fun;
+    tf.msg = msg;
+    return tf;
+}
 
 
-    int main(int argc, char *argv[])
-    {
-	int comm_size;	
-	int comm_rank;
-	int dim;
+int main(int argc, char *argv[])
+{
+    int comm_size;	
+    int comm_rank;
+    int dim;
 
-	MPI_Init(&argc, &argv);
-	MPI_Comm_size(MPI_COMM_WORLD, &comm_size);
-	MPI_Comm_rank(MPI_COMM_WORLD, &comm_rank);
-	dim = sqrt(comm_size);
+    MPI_Init(&argc, &argv);
+    MPI_Comm_size(MPI_COMM_WORLD, &comm_size);
+    MPI_Comm_rank(MPI_COMM_WORLD, &comm_rank);
+    dim = sqrt(comm_size);
 
-	int s = sqrt(comm_size);
-	if(s*s != comm_size){
-	    fprintf(stderr, "The number of processus must be a power\n");
-	    MPI_Finalize();
-	    return 0;
-	}
-    
-	const int NB_TESTS = 1;
-	test_function_t tests[] = {init_test(test_fox_mpi,"FOX TEST")};
-	int ret;
-	int passed = 0;
-
-    
-	ret = tests[0].fun(dim);
-	if(ret!=-1){
-	
-	    passed+=ret;
-	    printf("%-25s%6s\n", tests[0].msg, (!ret)?"\033[31;1mFAILED\033[0m":"\033[32;1mPASSED\033[0m");
-	
-	    printf("\n%d out of %d tests passed.\033[0m\n",passed,NB_TESTS);
-	}
-
-    
+    if(dim*dim != comm_size){
+	fprintf(stderr, "The number of processus must be a power\n");
 	MPI_Finalize();
 	return 0;
     }
+    
+    const int NB_TESTS = 1;
+    test_function_t tests[] = {init_test(test_fox_mpi,"FOX TEST")};
+    int ret;
+    int passed = 0;
+
+    
+    ret = tests[0].fun(dim);
+    if(ret!=-1){
+	
+	passed+=ret;
+	printf("%-25s%6s\n", tests[0].msg, (!ret)?"\033[31;1mFAILED\033[0m":"\033[32;1mPASSED\033[0m");
+	
+	printf("\n%d out of %d tests passed.\033[0m\n",passed,NB_TESTS);
+    }
+
+    
+    MPI_Finalize();
+    return 0;
+}

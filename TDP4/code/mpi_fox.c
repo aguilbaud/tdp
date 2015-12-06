@@ -18,7 +18,8 @@ void init_cart_comm(MPI_Comm *grid, MPI_Comm *line_comm, int n){
 void init_datatype(int dim, int bloc_size, MPI_Datatype *mpi_type_bloc){
     MPI_Datatype mpi_type_bloc1;
     MPI_Type_vector(bloc_size, bloc_size, bloc_size*dim, MPI_DOUBLE, &mpi_type_bloc1);
-    MPI_Type_create_resized(mpi_type_bloc1, 0, (dim-1)*bloc_size*sizeof(double), mpi_type_bloc);
+    MPI_Type_create_resized(mpi_type_bloc1, 0,(bloc_size==1)?sizeof(double):(dim-1)*bloc_size*sizeof(double), mpi_type_bloc);
+
     MPI_Type_commit(mpi_type_bloc);
     MPI_Type_free(&mpi_type_bloc1); 
 }
@@ -132,12 +133,11 @@ void fox(const double *A, const double *B, double *C, int loc_N, int dim){
     /*Scatter matrices*/
     MPI_Barrier(MPI_COMM_WORLD);
     start = MPI_Wtime();
-    fox_scatter(A ,loc_A,loc_N, &mpi_type_bloc, dim);
-    fox_scatter(B ,loc_B,loc_N, &mpi_type_bloc, dim);
-    fox_scatter(C ,loc_C,loc_N, &mpi_type_bloc, dim);
+    fox_scatter(A ,loc_A, loc_N, &mpi_type_bloc, dim);
+    fox_scatter(B ,loc_B, loc_N, &mpi_type_bloc, dim);
+    fox_scatter(C ,loc_C, loc_N, &mpi_type_bloc, dim);
     time_scatter = MPI_Wtime() - start;
     
-
     /*Fox algorithm*/
     start = MPI_Wtime();
     fox_compute(loc_N, dim, loc_A, loc_B, loc_C, comm_rank, grid_comm, line_comm);
@@ -148,7 +148,7 @@ void fox(const double *A, const double *B, double *C, int loc_N, int dim){
     fox_gather(C ,loc_C, loc_N, mpi_type_bloc, dim);
     time_gather = MPI_Wtime() - start;
     
-    printf("%d %f %f %f\n", comm_rank, time_scatter, time_compute, time_gather);
+    //  printf("%d %f %f %f\n", comm_rank, time_scatter, time_compute, time_gather);
     if(comm_rank == 0){
 	//affiche(N,N,C,N,stdout);
 	
