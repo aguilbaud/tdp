@@ -11,6 +11,8 @@
 \usepackage{array}
 \usepackage{colortbl}
 \usepackage[dvipsnames]{xcolor}
+\usepackage{geometry}
+\geometry{hmargin=3.5cm,vmargin=3.5cm}
 
 \title{Multiplication de matrices - Algorithme de Fox}
 \author{Benjamin \bsc{Angelaud} - Adrien \bsc{Guilbaud}}
@@ -18,24 +20,34 @@
 \maketitle
 
 \section{Introduction}
-L'objectif est de réaliser des multiplications matricielles dans un environnement distribué. Pour cela, nous utilisons l'algorithme de Fox. Cet algorithme procède en $n$ étapes.
+L'objectif est de réaliser des multiplications matricielles dans un environnement distribué. Pour cela, nous utilisons l'algorithme de Fox qui consiste à calculer et accumuler localement les termes de la somme: 
+$$c_{i,j} = a_{i,0} \times b_{0,j} + a_{i,1} \times b_{1,j} + ... + a_{i,n-1} \times b_{n-1,j} $$
 
+en fournisant au processus responsable du bloc $c_{i,j}$ les données nécessaires. Cet algorithme procède en $n$ étapes; pour chaque étape $k$:
+\begin{itemize}
+\item pour chaque ligne $i$, le proc $(i, (i+k)\%n)$ broadcast sur la ligne sur sa ligne son bloc $a$ loocal,
+\item pour chaque bloc $c_{i,j}$, on accumule la produit du $a$ reçu et de $b$ courant,
+\item sur toute la grille de communication, le bloc $b_{i+k\%n,j}$ est envoyé au dessus.
+\end{itemize}
+
+\scriptsize
 $$
 \begin{tabular}{ccc}
-
+  \centering
   Broadcast & Calculs & Shift
   \\
-
   \begin{tabular}{ccc}
     \color{cyan} $\mathbf{A_{11}} \rightarrow$  & $A_{12}$ & $A_{13}$ \\
     $A_{21}$ & \color{cyan} $\leftarrow \mathbf{A_{22}} \rightarrow$ & $A_{23}$ \\
     $A_{31}$ & $A_{32}$ & \color{cyan} $ \leftarrow \mathbf{A_{33}}$ \\
   \end{tabular}
             &
-              \begin{tabular}{ccc}
-                \color{cyan} $\mathbf{A_{11}}$ & $A_{12}$ & $A_{13}$ \\
-                $A_{21}$ & \color{cyan} $\mathbf{A_{22}}$ & $A_{23}$ \\
-                $A_{31}$ & $A_{32}$ & \color{cyan} $\mathbf{A_{33}}$ \\
+              \begin{tabular}{|ccc|}
+                \hline
+                $c_{11} += a_{11} \times b_{11}$ & $c_{12} += a_{11} \times b_{12}$ & $c_{13} += a_{11} \times b_{13}$ \\
+                $c_{21} += a_{22} \times b_{21}$ & $c_{22} += a_{22} \times b_{22}$ & $c_{23} += a_{22} \times b_{23}$ \\
+                $c_{31} += a_{33} \times b_{31}$ & $c_{32} += a_{33} \times b_{32}$ & $c_{33} += a_{33} \times b_{33}$ \\
+                \hline
               \end{tabular}
             &
               \begin{tabular}{ccc}
@@ -45,7 +57,7 @@ $$
               \end{tabular}
 \end{tabular}
 $$
-
+\normalsize
 \paragraph{}Nous nous limiterons à des matrices carrées, non transposées de mêmes dimensions. En prenant compte de ces contraintes, nous devons vérifier que le programme respecte les conditions suivantes:
 \begin{itemize}
 \item pour $p$ processus, $\sqrt{p}$ doit être un entier,
