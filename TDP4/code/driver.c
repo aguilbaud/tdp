@@ -29,7 +29,7 @@ int check_matrix(double *exp, double *res, int M, int N){
     //printf("%20.20f %20.20f\n", frobenius_norm_exp, frobenius_norm_res);
     test_res = (fabs(frobenius_norm_res-frobenius_norm_exp)/frobenius_norm_exp < ERROR_BOUND);
     if(!test_res){
-	return 0;
+	    return 0;
     }
     return 1;
 }
@@ -70,12 +70,12 @@ int test_fox_mpi(int dim){
 	
 	N=na;
 	loc_N = N/dim;
-	printf("%d %d \n", N, loc_N);
+	printf("N:%d loc_n:%d dim:%d\n", N, loc_N, dim);
 	if(loc_N * dim != N){
-	    fprintf(stderr, "Bad\n");
-	    free(A); free(B); free(C);
-	    MPI_Abort(MPI_COMM_WORLD, -1);
-	    return 0;
+		fprintf(stderr, "Bad\n");
+		free(A); free(B); free(C);
+		MPI_Abort(MPI_COMM_WORLD, -1);
+		return 0;
 	}
 	
 	C_bis = malloc(sizeof(double)*N*N);
@@ -86,67 +86,65 @@ int test_fox_mpi(int dim){
     
 
     if(comm_rank == 0){
-	
-	mycblas_dgemm_scalaire(CblasColMajor, CblasNoTrans, CblasNoTrans, N, N, N, 
-			       1.0, A, N, B, N, 0.0, C_bis, N);
+	    mycblas_dgemm_scalaire(CblasColMajor, CblasNoTrans, CblasNoTrans, N, N, N, 
+				   1.0, A, N, B, N, 0.0, C_bis, N);
 
-	
-	int res = check_matrix(C_bis, C, N, N);
-	free(A); free(B); free(C); free(C_bis);
-	return res;
+	    int res = check_matrix(C_bis, C, N, N);
+	    free(A); free(B); free(C); free(C_bis);
+	    return res;
     }
     
-    free(A); free(B); free(C); free(C_bis);
+    free(A); free(B); free(C);
     return -1;
 }
 
 typedef struct{
-    int(*fun)(int);
-    char *msg;
+	int(*fun)(int);
+	char *msg;
 }test_function_t;
 
 
 test_function_t init_test(int (*fun)(int),char *msg){
-    test_function_t tf;
-    tf.fun = fun;
-    tf.msg = msg;
-    return tf;
+	test_function_t tf;
+	tf.fun = fun;
+	tf.msg = msg;
+	return tf;
 }
 
 
 int main(int argc, char *argv[])
 {
-    int comm_size;	
-    int comm_rank;
-    int dim;
+	int comm_size;	
+	int comm_rank;
+	int dim;
 
-    MPI_Init(&argc, &argv);
-    MPI_Comm_size(MPI_COMM_WORLD, &comm_size);
-    MPI_Comm_rank(MPI_COMM_WORLD, &comm_rank);
-    dim = sqrt(comm_size);
+	MPI_Init(&argc, &argv);
+	MPI_Comm_size(MPI_COMM_WORLD, &comm_size);
+	MPI_Comm_rank(MPI_COMM_WORLD, &comm_rank);
+	dim = sqrt(comm_size);
 
-    if(dim*dim != comm_size){
-	fprintf(stderr, "The number of processus must be a power\n");
+	if(dim*dim != comm_size){
+		fprintf(stderr, "The number of processus must be a power\n");
+		MPI_Finalize();
+		return 0;
+	}
+    
+	const int NB_TESTS = 1;
+	test_function_t tests[] = {init_test(test_fox_mpi,"FOX TEST")};
+	int ret;
+	int passed = 0;
+
+    
+	ret = tests[0].fun(dim);
+	if(ret!=-1){
+	
+		passed+=ret;
+		printf("%-25s%6s\n", tests[0].msg, (!ret)?"\033[31;1mFAILED\033[0m":"\033[32;1mPASSED\033[0m");
+	
+		printf("\n%d out of %d tests passed.\033[0m\n",passed,NB_TESTS);
+	}
+
+    
 	MPI_Finalize();
 	return 0;
-    }
-    
-    const int NB_TESTS = 1;
-    test_function_t tests[] = {init_test(test_fox_mpi,"FOX TEST")};
-    int ret;
-    int passed = 0;
-
-    
-    ret = tests[0].fun(dim);
-    if(ret!=-1){
-	
-	passed+=ret;
-	printf("%-25s%6s\n", tests[0].msg, (!ret)?"\033[31;1mFAILED\033[0m":"\033[32;1mPASSED\033[0m");
-	
-	printf("\n%d out of %d tests passed.\033[0m\n",passed,NB_TESTS);
-    }
-
-    
-    MPI_Finalize();
-    return 0;
 }

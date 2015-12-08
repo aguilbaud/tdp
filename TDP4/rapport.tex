@@ -60,8 +60,8 @@ $$
 \normalsize
 \paragraph{}Nous nous limiterons à des matrices carrées, non transposées de mêmes dimensions. En prenant compte de ces contraintes, nous devons vérifier que le programme respecte les conditions suivantes:
 \begin{itemize}
-\item pour $p$ processus, $\sqrt{p}$ doit être un entier,
-\item pour une matrice $N \times N$, $n= \frac{N}{\sqrt{p}} $ donne la taille des blocs et doit être un entier.
+\item $q=\sqrt{p}$ est la dimension de la grille de processus, avec $p$ le nombre total de processus, doit être un entier dont la puissance est un entier naturel,
+\item pour une matrice $N \times N$, $n= \frac{N}{q} $ donne la taille des blocs, avec $N$ divisible par $q$.
 \end{itemize}
 
 \section{Implémentation} \label{s:impl}
@@ -81,16 +81,20 @@ Nous avons créé un type de donnée représentant une sous-matrice de taille $n
 
 \begin{figure}[ht]
   \centering
-  \begin{tabular}{|c|c||c|c|}
+  \begin{tabular}{|c|c|c||c|c|c|}
     \hline
-    \cellcolor{green}& \cellcolor{green} & & \\ 
+    \cellcolor{green}& \cellcolor{green} & \cellcolor{green} & & & \\ 
     \hline
-    \cellcolor{green}& \cellcolor{green}& & \\ 
+    \cellcolor{green}& \cellcolor{green} & \cellcolor{green} & & & \\
+    \hline
+    \cellcolor{green}& \cellcolor{green} & \cellcolor{green} & & & \\ 
     \hline
     \hline
-    \cellcolor{gray}& & & \\ 
+    \cellcolor{gray}& \cellcolor{gray} & & & & \\ 
     \hline
-    \cellcolor{gray}& & & \\ 
+    \cellcolor{gray}& \cellcolor{gray} & & & & \\
+    \hline
+    \cellcolor{gray}& \cellcolor{gray} & & & & \\ 
     \hline
   \end{tabular}
   \caption{\label{fig:datatype} Type de donnée avec extent de base}
@@ -98,7 +102,7 @@ Nous avons créé un type de donnée représentant une sous-matrice de taille $n
 
 
 \paragraph{Grille de processus}
-Une fois que les fichiers contenant les matrices sont lus, nous pouvons créer la grille de processus. En plus de la grille, nous créons des communicateurs sur chaque ligne qui faciliterons le broadcast des blocs.
+Une fois que les fichiers contenant les matrices sont lus, nous pouvons créer la grille de processus. En plus de la grille, nous créons des communicateurs sur chaque ligne qui faciliteront le broadcast des blocs.
 
 \paragraph{Calcul}
 Nous avons vu que cet algorithme s'effectue en $n$ étapes. Pour chaque étape $k$, les processus d'une ligne $i$ participent au broadcast du bloc $A_{i,(i+k)\%n}$. Il faut ensuite effectuer un dgemm classique entre les blocs $A$ et $B$ locaux (lors de la 1\iere{} étape, le $B$ correspond au bloc reçu lors du $fox\_scatter$). Pour finir, chaque processus envoie son bloc $B$ local à son voisin du dessus grâce à la fonction $MPI\_Cart\_shift$.
@@ -107,6 +111,11 @@ Nous avons vu que cet algorithme s'effectue en $n$ étapes. Pour chaque étape $
 Tous les tests suivants, notamment les tests de performance, ont été exécutés sur la machine PlaFRIM. Nous mesurons le temps d'exécution des 3 fonctions principales présentées en section \ref{s:impl} grâce à la fonction $MPI\_Wtime$ pour chaque processus, puis nous gardons la valeurs la plus élevée pour tracer les courbes.
 
 \subsection{Tests unitaires}
+\paragraph{Cas d'un unique processus}
+Dans le but de pouvoir comparer le temps d'éxécution en parallèle, nous avons fait en sorte que le programme puisse être lancé avec un seul processus. Il a donc fallu modifier l'étape permettant la création de la grille ainsi que l'appel à la fonction $MPI\_Cart\_shift$.
+
+\paragraph{Cas d'une sous matrice à un seul élément}
+Nous avons ensuite testé le cas ou les sous-matrices résultantes de l'éclatement des matrices initiales était un élément unique. Pour que ce test passe, il ne fallait pas modifier l'extent du type de donnée car sinon, celui-ci était égal à $0$.
 
 \subsection{Tests de performance}
 Avant l'appel de la fonction $fox$ dans les fonctions de tests présentes dans le fichiers $timing\_fox$, nous avons mis une barrière avant de ne pas mesurer le temps de chargement des matrices effectué par un unique processus.
