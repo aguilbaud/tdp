@@ -23,41 +23,90 @@
 L'objectif est de réaliser des multiplications matricielles dans un environnement distribué. Pour cela, nous utilisons l'algorithme de Fox qui consiste à calculer et accumuler localement les termes de la somme: 
 $$c_{i,j} = a_{i,0} \times b_{0,j} + a_{i,1} \times b_{1,j} + ... + a_{i,n-1} \times b_{n-1,j} $$
 
-en fournisant au processus responsable du bloc $c_{i,j}$ les données nécessaires. Cet algorithme procède en $n$ étapes; pour chaque étape $k$:
+en fournissant au processus responsable du bloc $c_{i,j}$ les données nécessaires. Cet algorithme procède en $n$ étapes; pour chaque étape $k$:
 \begin{itemize}
-\item pour chaque ligne $i$, le proc $(i, (i+k)\%n)$ broadcast sur la ligne sur sa ligne son bloc $a$ loocal,
+\item pour chaque ligne $i$, le processeur $(i, (i+k)\%n)$ broadcast sur sa ligne son bloc $a$ local,
 \item pour chaque bloc $c_{i,j}$, on accumule la produit du $a$ reçu et de $b$ courant,
 \item sur toute la grille de communication, le bloc $b_{i+k\%n,j}$ est envoyé au dessus.
 \end{itemize}
 
 \scriptsize
 $$
-\begin{tabular}{ccc}
+\begin{tabular}{cccc}
   \centering
-  Broadcast & Calculs & Shift
-  \\
-  \begin{tabular}{ccc}
-    \color{cyan} $\mathbf{A_{11}} \rightarrow$  & $A_{12}$ & $A_{13}$ \\
-    $A_{21}$ & \color{cyan} $\leftarrow \mathbf{A_{22}} \rightarrow$ & $A_{23}$ \\
-    $A_{31}$ & $A_{32}$ & \color{cyan} $ \leftarrow \mathbf{A_{33}}$ \\
-  \end{tabular}
-            &
-              \begin{tabular}{|ccc|}
-                \hline
-                $c_{11} += a_{11} \times b_{11}$ & $c_{12} += a_{11} \times b_{12}$ & $c_{13} += a_{11} \times b_{13}$ \\
-                $c_{21} += a_{22} \times b_{21}$ & $c_{22} += a_{22} \times b_{22}$ & $c_{23} += a_{22} \times b_{23}$ \\
-                $c_{31} += a_{33} \times b_{31}$ & $c_{32} += a_{33} \times b_{32}$ & $c_{33} += a_{33} \times b_{33}$ \\
-                \hline
-              \end{tabular}
-            &
-              \begin{tabular}{ccc}
-                $B_{11}\uparrow$ & $B_{12}\uparrow$ & $B_{13}\uparrow$ \\
-                $B_{21}\uparrow$ & $B_{22}\uparrow$ & $B_{23}\uparrow$ \\
-                $B_{31}\uparrow$ & $B_{32}\uparrow$ & $B_{33}\uparrow$ \\
-              \end{tabular}
+  $k$ & Broadcast & Calculs & Shift \\
+  \hline
+  1 
+      &
+        \begin{tabular}{ccc}
+          \color{cyan} $\mathbf{A_{11}} $  & $A_{12}$ & $A_{13}$ \\
+          $A_{21}$ & \color{cyan} $ \mathbf{A_{22}} $ & $A_{23}$ \\
+          $A_{31}$ & $A_{32}$ & \color{cyan} $  \mathbf{A_{33}}$ \\
+        \end{tabular}
+      &
+        \begin{tabular}{|ccc|}
+          \hline
+          $c_{11} += a_{11} \times b_{11}$ & $c_{12} += a_{11} \times b_{12}$ & $c_{13} += a_{11} \times b_{13}$ \\
+          $c_{21} += a_{22} \times b_{21}$ & $c_{22} += a_{22} \times b_{22}$ & $c_{23} += a_{22} \times b_{23}$ \\
+          $c_{31} += a_{33} \times b_{31}$ & $c_{32} += a_{33} \times b_{32}$ & $c_{33} += a_{33} \times b_{33}$ \\
+          \hline
+        \end{tabular}
+      &
+        \begin{tabular}{ccc}
+          $B_{11}\uparrow$ & $B_{12}\uparrow$ & $B_{13}\uparrow$ \\
+          $B_{21}\uparrow$ & $B_{22}\uparrow$ & $B_{23}\uparrow$ \\
+          $B_{31}\uparrow$ & $B_{32}\uparrow$ & $B_{33}\uparrow$ \\
+        \end{tabular} \\
+  \hline
+  2 
+      &
+        \begin{tabular}{ccc}
+          $A_{11} $  & \color{cyan} $\mathbf{A_{12}}$ & $A_{13}$ \\
+          $A_{21}$ & $A_{22} $ & \color{cyan} $ \mathbf{A_{23}}$ \\
+          \color{cyan} $  \mathbf{A_{31}}$ & $A_{32}$ & $A_{33}$ \\
+        \end{tabular}
+      &
+        \begin{tabular}{|ccc|}
+          \hline
+          $c_{11} += a_{12} \times b_{21}$ & $c_{12} += a_{12} \times b_{22}$ & $c_{13} += a_{12} \times b_{23}$ \\
+          $c_{21} += a_{23} \times b_{31}$ & $c_{22} += a_{23} \times b_{32}$ & $c_{23} += a_{23} \times b_{33}$ \\
+          $c_{31} += a_{31} \times b_{11}$ & $c_{32} += a_{31} \times b_{12}$ & $c_{33} += a_{31} \times b_{13}$ \\
+          \hline
+        \end{tabular}
+      &
+        \begin{tabular}{ccc}
+          $B_{21}\uparrow$ & $B_{22}\uparrow$ & $B_{23}\uparrow$ \\
+          $B_{31}\uparrow$ & $B_{32}\uparrow$ & $B_{33}\uparrow$ \\
+          $B_{11}\uparrow$ & $B_{12}\uparrow$ & $B_{13}\uparrow$ \\
+        \end{tabular} \\
+  \hline
+  3
+      &
+        \begin{tabular}{ccc}
+          $A_{11} $  & $A_{12}$ & \color{cyan} $\mathbf{A_{13}}$ \\
+          \color{cyan} $ \mathbf{A_{21}}$ & $A_{22} $ & $A_{23}$ \\
+          $A_{31}$ & \color{cyan} $  \mathbf{A_{32}}$ & $A_{33}$ \\
+        \end{tabular}
+      &
+        \begin{tabular}{|ccc|}
+          \hline
+          $c_{11} += a_{13} \times b_{31}$ & $c_{12} += a_{13} \times b_{32}$ & $c_{13} += a_{13} \times b_{33}$ \\
+          $c_{21} += a_{21} \times b_{11}$ & $c_{22} += a_{21} \times b_{12}$ & $c_{23} += a_{21} \times b_{13}$ \\
+          $c_{31} += a_{32} \times b_{21}$ & $c_{32} += a_{32} \times b_{22}$ & $c_{33} += a_{32} \times b_{23}$ \\
+          \hline
+        \end{tabular}
+      &
+        \begin{tabular}{ccc}
+          &  &  \\
+          &  &  \\
+          &  &  \\
+        \end{tabular} \\
+  \hline
 \end{tabular}
 $$
 \normalsize
+\paragraph{}Grâce à la circulation des blocs, la somme permettant le calcul d'un $c_{i,j}$ est bien réalisée.
+
 \paragraph{}Nous nous limiterons à des matrices carrées, non transposées de mêmes dimensions. En prenant compte de ces contraintes, nous devons vérifier que le programme respecte les conditions suivantes:
 \begin{itemize}
 \item $q=\sqrt{p}$ est la dimension de la grille de processus, avec $p$ le nombre total de processus, doit être un entier dont la puissance est un entier naturel,
@@ -76,7 +125,7 @@ Nous avons créé 3 fonctions principales:
 En plus de ces 3 fonctions constituant le coeur de l'algorithme de Fox, nous avons également 2 autres fonctions permettant la création de la grille 2D des processus et des communicateurs associés, ainsi que la création d'un type de donnée ``sous-matrice''.
 
 \paragraph{Type de donnée}
-Nous avons créé un type de donnée représentant une sous-matrice de taille $n\times n$ pour faciliter l'éclatement des matrices utilisées. Le problème est que les cases grises (fig \ref{fig:datatype}) font partie de ce type. Pour remédier à ça, nous avons modifié l'extent du type pour qu'il contienne exactement le bon nombre d'éléments. 
+Nous avons créé un type de donnée représentant une sous-matrice de taille $n\times n$ pour faciliter l'éclatement des matrices utilisées. Le problème est que l'extent de ce type prend en compte les cases vertes et les cases grises (fig \ref{fig:datatype}, ici $extent = 15$). Pour remédier à ça, nous avons modifié l'extent du type pour qu'il contienne exactement le bon nombre d'éléments (ici $extent = 3$). 
 
 
 \begin{figure}[ht]
@@ -112,18 +161,67 @@ Tous les tests suivants, notamment les tests de performance, ont été exécuté
 
 \subsection{Tests unitaires}
 \paragraph{Cas d'un unique processus}
-Dans le but de pouvoir comparer le temps d'éxécution en parallèle, nous avons fait en sorte que le programme puisse être lancé avec un seul processus. Il a donc fallu modifier l'étape permettant la création de la grille ainsi que l'appel à la fonction $MPI\_Cart\_shift$.
+Il faut s'assurer que le programme puisse être lancé avec un seul processus.
 
 \paragraph{Cas d'une sous matrice à un seul élément}
-Nous avons ensuite testé le cas ou les sous-matrices résultantes de l'éclatement des matrices initiales était un élément unique. Pour que ce test passe, il ne fallait pas modifier l'extent du type de donnée car sinon, celui-ci était égal à $0$.
+Nous avons ensuite testé le cas ou les sous-matrices résultantes de l'éclatement des matrices initiales était un élément unique.
 
 \subsection{Tests de performance}
-Avant l'appel de la fonction $fox$ dans les fonctions de tests présentes dans le fichiers $timing\_fox$, nous avons mis une barrière avant de ne pas mesurer le temps de chargement des matrices effectué par un unique processus.
+Avant l'appel de la fonction $fox$ dans les fonctions de tests présentes dans le fichier $timing\_fox$, nous avons mis une barrière afin de ne pas mesurer le temps de lecture des fichiers contenant les matrices effectué par un unique processus.
+
+\paragraph{Proportion des fonctions}
+Nous pouvons observer sur le figure \ref{fig:fun_time} que la proportion du temps passé dans les différentes fonctions appelées. Nous pouvons voir que le temps d'exécution de la fonction $fox\_scatter$ augmente lorsque le nombre de processus et la taille de la matrice augmentent. La fonction $fox\_gather$ semble rester constante.
+\paragraph{}Cependant, lorsque nous utilisons MKL (fig. \ref{fig:fun_time2}), le temps de calcul diminue et le temps d'éclatement des matrices devient  proportionnellement plus grand au nombre de processus.
+
+\begin{figure}[ht]
+  \centering
+  \minipage{0.32\textwidth}
+  \includegraphics[width=\linewidth,page=1]{curves/function_time.pdf}
+  \endminipage
+  \minipage{0.32\textwidth}
+  \includegraphics[width=\linewidth,page=2]{curves/function_time.pdf}
+  \endminipage
+  \minipage{0.32\textwidth}
+  \includegraphics[width=\linewidth,page=3]{curves/function_time.pdf}
+  \endminipage
+  \caption{\label{fig:fun_time} Temps d'exécution des fonctions avec dgemm TDP1}
+\end{figure}
+
+
+\begin{figure}[ht]
+  \centering
+  \minipage{0.32\textwidth}
+  \includegraphics[width=\linewidth,page=1]{curves/function_time_mkl.pdf}
+  \endminipage
+  \minipage{0.32\textwidth}
+  \includegraphics[width=\linewidth,page=2]{curves/function_time_mkl.pdf}
+  \endminipage
+  \minipage{0.32\textwidth}
+  \includegraphics[width=\linewidth,page=3]{curves/function_time_mkl.pdf}
+  \endminipage
+  \caption{\label{fig:fun_time2} Temps d'exécution des fonctions avec dgemm MKL}
+\end{figure}
+
 
 \paragraph{Choix de la méthode de communication}
 Dans la fonction $fox\_compute$, les communications permettant l'échange des blocs de $B$ à travers la grille se font grâce à des Isend/Irecv classiques (les communications sont non-bloquantes pour éviter les inter-blocages). Cependant, il est possible d'utiliser la fonction $MPI\_Sendrecv\_replace$ qui permet l'envoi et la réception grâce à un unique buffer. Nous avons donc comparé l'utilisation de ces 2 fonctions.
 
+\begin{figure}[ht]
+  \centering
+  \includegraphics[scale=0.7]{curves/replace.pdf}
+  \caption{\label{fig:replace} Comparaison }
+\end{figure}
 
-\section{Passage à l'échelle}
+\paragraph{}Nous voyons que l'utilisation de la fonction $MPI\_Sendrecv\_replace$ semble ne pas avoir d'impact sur la durée des communications (fig. \ref{fig:replace}) Nous avons quand même gardé cette fonction car elle simplifie le code.
+
+
+\newpage
+\section{Annexe}
+\paragraph{}Le module mkl est nécessaire (module load intel/mkl).
+\begin{itemize}
+\item mpirun -n \textless nb\textgreater  ./timing \textless pathToA\textgreater  \textless pathToB\textgreater  \textless pathToC\textgreater  : réalise $C=A*B + C$ et affiche les temps d'exécution des 3 fonctions (vues dans la section \ref{s:impl}),
+\item mpirun -n \textless nb\textgreater  ./driver \textless pathToA\textgreater  \textless pathToB\textgreater  \textless pathToC\textgreater  : compare le résultat de la multiplication de fox avec la version séquentielle (MKL),
+\item ./gen\_mat \textless matrixSize\textgreater  \textless file\textgreater  : génère aléatoirement une matrice de taille \textless matrixSize\textgreater . Les valeurs sont comprises entre -100 et 100 et peuvent être modifiées dans le fichiers gen\_mat.c.
+\end{itemize}
 
 \end{document}
