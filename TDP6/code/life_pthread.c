@@ -1,20 +1,3 @@
-//code barrier()
-pthread_mutex_lock(&mtx);
-id = barrier_id;
-barrier++;
-if(barrier == nb_threads){
-  barrier = 0;
-  barrier_id ++;
-  pthread_cond_broadcast(&cond);
- }
-
-
-while(id==id_barrier){
-  pthread_cond_wait(&cond,&mtx);
- }
-pthread_mutex_unlock(&mtx);
-
-
 #include <stdio.h>
 #include <stdlib.h>
 #include <sys/time.h>
@@ -25,9 +8,10 @@ pthread_mutex_unlock(&mtx);
 int BS;
 int nb_threads;
 pthread_cond_t* cond;
-pthread_mutex_t* muts;
+pthread_mutex_t* mtx;
+int* cpt;
 pthread_barrier_t barrier;
-sem_t* sems;
+
 
 #define cell( _i_, _j_ ) board[ ldboard * (_j_) + (_i_) ]
 #define ngb( _i_, _j_ )  nbngb[ ldnbngb * ((_j_) - 1) + ((_i_) - 1 ) ]
@@ -88,8 +72,32 @@ typedef struct param_s{
   
 }param_t;
 
-void * f_threads( void * param){
 
+void unlock_neighbours(int *nbgs){
+    for (int i = 0; i < 2; i++) {
+	pthread_mutex_lock(&mtx[nbgs[i]]);
+
+        cpt[nbgs[i]]++;
+	if(cpt[nbgs[i]] == 2){
+	    pthread_cond_broadcast(&cond[nbgs[i]]);
+	}
+
+	pthread_mutex_unlock(&mtx[nbgs[i]]);
+    }
+}
+    
+void wait_neighbours(int id, int *nbgs){
+    pthread_mutex_lock(&mtx[id]);
+    
+    while(cpt[id] != 2){
+	pthread_cond_wait(&cond[id], &mtx[id]);
+    }
+    cpt[id] = 0;
+
+    pthread_mutex_unlock(&mtx[id]);
+}
+
+void * f_threads( void * param){
     param_t *p = (param_t*) param;
     int *nbngb = p->nbngb;
     int ldnbngb = p->ldnbngb;
@@ -140,21 +148,8 @@ void * f_threads( void * param){
 	    j = end;
 	}
 	
-	int sem_val;
-	if(p->id == 1){
-	    sem_getvalue(&sems[0], &sem_val);
-	    printf("sem 0, %d \n", sem_val);
-	}
-
-	sem_post(&sems[nbgs[0]]);
-	sem_post(&sems[nbgs[1]]);
-
-	if(p->id == 1){
-	    sem_getvalue(&sems[0], &sem_val);
-	    printf("sem 0, %d \n", sem_val);
-	}
-
-	//On informe les voisins qu'on a fini de lire leurs cellules
+   	//On informe les voisins qu'on a fini de lire leurs cellules
+	unlock_neighbours(nbgs);
 
 	//On calcule les voisins des cellules internes
 	//printf("Th %d calcul voisins internes cols: [%d,%d]\n", p->id, beg+1, end-1);
@@ -166,7 +161,6 @@ void * f_threads( void * param){
 		    cell( i-1, j+1 ) + cell( i, j+1 ) + cell( i+1, j+1 );
 	    }
 	}
-
 	
 
 	//Mise à jour des cellules internes
@@ -188,15 +182,10 @@ void * f_threads( void * param){
 	}
 
 	//Attendre que les voisins aient finis de lire nos cellules
-	if(p->id == 1){
-	    sem_getvalue(&sems[0], &sem_val);
-	    printf("sem 0, %d \n", sem_val);
-	}
-	sem_wait(&sems[p->id]);
-	if(p->id == 1){
-	    sem_getvalue(&sems[0], &sem_val);
-	    printf("sem 0, %d \n", sem_val);
-	}
+	/* if(p->id == 0) */
+	/*     sleep(2); */
+	wait_neighbours(p->id, nbgs);
+
 	//Mise à jour des bords	
 	j = beg;
 	for(int k = 0; k<2; k++){
@@ -226,7 +215,7 @@ void * f_threads( void * param){
 
 int main(int argc, char* argv[])
 {
-    int i, j, loop, num_alive, maxloop;
+    int num_alive, maxloop;
     int ldboard, ldnbngb;
     double t1, t2;
     double temps;
@@ -248,14 +237,13 @@ int main(int argc, char* argv[])
 
     num_alive = 0;
     
-    //Création des threads + mutex
+    //Initialisation des threads + mutex + conds
     cond = malloc(nb_threads*sizeof(pthread_cond_t));
-    muts = malloc(nb_threads*sizeof(pthread_mutex_t));
-    sems = malloc(nb_threads*sizeof(sem_t));
+    mtx = malloc(nb_threads*sizeof(pthread_mutex_t));
+    cpt = calloc(nb_threads, sizeof(int));
     for (int i = 0; i < nb_threads; ++i){
 	pthread_cond_init( &cond[i], NULL);
-	pthread_mutex_init( &muts[i], NULL);
-	sem_init( &sems[i], 0, 0);
+	pthread_mutex_init( &mtx[i], NULL);
     }
     pthread_barrier_init(&barrier, NULL, nb_threads);
     /* Leading dimension of the board array */
@@ -281,10 +269,13 @@ int main(int argc, char* argv[])
 	
     printf("Starting number of living cells = %d\n", num_alive);
     t1 = mytimer();
+
+    //Creation des threads
     for (int i = 0; i < nb_threads; ++i){
 	pthread_create(&t[i], NULL, f_threads, (void *) &p[i]);
     }
 
+    //Attente de la terminaison des threads + comptage du nb de cellules
     num_alive = 0;
     int *tmp;
     for (int i = 0; i < nb_threads; ++i){
@@ -311,13 +302,9 @@ int main(int argc, char* argv[])
     /* 	pthread_mutex_destroy ( &muts[i]); */
     /* } */
     free(cond);
-    free(muts);
-    free(sems);
+    free(mtx);
+    free(cpt);
     free(board);
     free(nbngb);
     return EXIT_SUCCESS;
 }
-
-
-
-  

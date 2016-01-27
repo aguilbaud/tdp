@@ -83,13 +83,13 @@ int main(int argc, char* argv[])
     nbngb = malloc( ldnbngb * ldnbngb * sizeof(int) );
 
     num_alive = generate_initial_board( BS, &(cell(1, 1)), ldboard );
-    int nbth;
-#pragma omp parallel
-{
-    nbth = omp_get_num_threads();
-}
+    /* int nbth; */
+/* #pragma omp parallel */
+/* { */
+/*     nbth = omp_get_num_threads(); */
+/* } */
 
-    printf("Starting number of living cells = %d NB threads = %d\n", num_alive, nbth);
+//printf("Starting number of living cells = %d NB threads = %d\n", num_alive, nbth);
     t1 = mytimer();
     
     //Boucle sur les iterations
@@ -146,14 +146,12 @@ int main(int argc, char* argv[])
 
         /* Avec juste les "vraies" cellules: on commence à l'élément (1,1) */
         //output_board( BS, &(cell(1, 1)), ldboard, loop);
-
-	printf("%d cells are alive\n", num_alive);
     }
 
     t2 = mytimer();
     temps = t2 - t1;
-    printf("Final number of living cells = %d\n", num_alive);
-    printf("%.2lf\n",(double)temps * 1.e3);
+    printf("%d\n", num_alive);
+    //printf("%.2lf\n",(double)temps * 1.e3);
 
     free(board);
     free(nbngb);
