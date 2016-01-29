@@ -15,6 +15,13 @@ int BS;
 #define RIGHT 1
 #define UP 2
 #define DOWN 3
+#define UPPERLEFT 4
+#define UPPERRIGHT 5
+#define LOWERRIGHT 6
+#define LOWERLEFT 7
+
+#define LINE 8
+#define COLUMN 9
 
 double mytimer(void)
 {
@@ -108,35 +115,75 @@ void gather(const int *A, const int *A_loc, int bloc_size, MPI_Datatype mpi_type
 void create_neighbors(int* neighbors, MPI_Comm grid, int myrank){
   int displ;
   int index;
+  int coords[2];
+
   index = 1;
   displ = 1;
   MPI_Cart_shift(grid, index, displ, &neighbors[LEFT], &neighbors[RIGHT]);
   index = 0;
   MPI_Cart_shift(grid, index, displ, &neighbors[UP], &neighbors[DOWN]);
+  MPI_Cart_coords(grid, myrank, 2, coords);
+  coords[0]--;
+  coords[1]--;
+  MPI_Cart_rank(grid, coords, &neighbors[UPPERLEFT]);
+  coords[1]+=2;
+  MPI_Cart_rank(grid, coords, &neighbors[UPPERRIGHT]);
+  coords[0]+=2;
+  MPI_Cart_rank(grid, coords, &neighbors[LOWERRIGHT]);
+  coords[1]-=2;
+  MPI_Cart_rank(grid, coords, &neighbors[LOWERLEFT]);
 }
 
-void do_communications(int* neighbors, int block_size, MPI_Comm grid, int *tab, int ldtab, MPI_Datatype block_column, int comm_rank){
-  MPI_Status status;
+void do_communications(MPI_Request* rq, int* neighbors, int block_size, MPI_Comm grid, int *tab, int ldtab, MPI_Datatype block_column, int comm_rank){
   // Vers le haut
-  MPI_Sendrecv(&tab[ldtab+1], block_size, MPI_INT, neighbors[UP], 0,
-	       &tab[ldtab*(ldtab-1)+1], block_size, MPI_INT, 
-	       neighbors[DOWN], 0, grid, &status);
-  if(comm_rank==0){
-    printf("envoi de tab[%d] -> tab[%d] à %d et réception en tab[%d] -> tab[%d] de %d\n"
-	   ,ldtab+1, ldtab+1+block_size-1, neighbors[UP], ldtab*(ldtab-1)+1, ldtab*(ldtab-1)+1+block_size-1, neighbors[DOWN]);
-  }
+  MPI_Isend(&tab[ldtab+1], block_size, MPI_INT, neighbors[UP], 0, grid, &rq[0]);
+  MPI_Irecv(&tab[ldtab*(ldtab-1)+1], block_size, MPI_INT, neighbors[DOWN], 0, grid, &rq[0]);
   // Vers le bas
-  MPI_Sendrecv(&tab[ldtab*(ldtab-2)+1], block_size, MPI_INT, neighbors[DOWN], 0,
-	       &tab[1], block_size, MPI_INT, 
-	       neighbors[UP], 0, grid, &status);
+  MPI_Isend(&tab[ldtab*(ldtab-2)+1], block_size, MPI_INT, neighbors[DOWN], 0, grid, &rq[1]);
+  MPI_Irecv(&tab[1], block_size, MPI_INT, neighbors[UP], 0, grid, &rq[1]);
   // Vers la droite
-  MPI_Sendrecv(&tab[ldtab-2], 1, block_column,neighbors[RIGHT], 0,
-	       &tab[0], 01, block_column,
-	       neighbors[LEFT], 0, grid, &status);
+  MPI_Isend(&tab[ldtab-2], 1, block_column,neighbors[RIGHT], 0, grid, &rq[2]);
+  MPI_Irecv(&tab[0], 01, block_column, neighbors[LEFT], 0, grid, &rq[2]);
   // Vers la gauche
-  MPI_Sendrecv(&tab[1], 1, block_column,neighbors[LEFT], 0,
-	       &tab[ldtab-1], 1, block_column,
-	       neighbors[RIGHT], 0, grid, &status);
+  MPI_Isend(&tab[1], 1, block_column, neighbors[LEFT], 0, grid, &rq[3]);
+  MPI_Irecv(&tab[ldtab-1], 1, block_column, neighbors[RIGHT], 0, grid, &rq[3]);
+  // Vers le haut droit
+  MPI_Isend(&tab[ldtab*2 - 2], 1, MPI_INT, neighbors[UPPERRIGHT], 0, grid, &rq[4]);
+  MPI_Irecv(&tab[ldtab*(ldtab-1)], 1, MPI_INT, neighbors[LOWERLEFT], 0, grid, &rq[4]);
+  // Vers le bas droit
+  MPI_Isend(&tab[ldtab*(ldtab-1)-2], 1, MPI_INT, neighbors[LOWERRIGHT], 0, grid, &rq[5]);
+  MPI_Irecv(&tab[0], 1, MPI_INT, neighbors[UPPERLEFT], 0, grid, &rq[5]);
+  // Vers le haut gauche
+  MPI_Isend(&tab[ldtab+1], 1, MPI_INT, neighbors[UPPERLEFT], 0, grid, &rq[6]);
+  MPI_Irecv(&tab[ldtab*ldtab - 1], 1, MPI_INT, neighbors[LOWERRIGHT], 0, grid, &rq[6]);
+  // Vers le bas gauche
+  MPI_Isend(&tab[ldtab*(ldtab-2)+1], 1, MPI_INT,neighbors[LOWERLEFT], 0, grid, &rq[7]);
+  MPI_Irecv(&tab[ldtab-1], 1, MPI_INT, neighbors[UPPERRIGHT], 0, grid, &rq[7]);
+}
+
+void calc_ngb(int k, int type, int block_size, int* loc_A_neigh, int ldboard, int* nbngb, int ldnbngb)
+{
+  int loc_BS = block_size;
+  if (type == LINE)
+    {
+      int i = k;
+      for (int j = 1; j <= block_size; j++) {
+	ngb( i, j ) =
+	  cell2( i-1, j-1 ) + cell2( i, j-1 ) + cell2( i+1, j-1 ) +
+	  cell2( i-1, j ) + cell2( i+1, j ) +
+	  cell2( i-1, j+1 ) + cell2( i, j+1 ) + cell2( i+1, j+1 );
+      }
+    }
+  if (type == COLUMN)
+    {
+      int j = k;
+      for (int i = 1; i <= block_size; i++) {
+	ngb( i, j ) =
+	  cell2( i-1, j-1 ) + cell2( i, j-1 ) + cell2( i+1, j-1 ) +
+	  cell2( i-1, j ) + cell2( i+1, j ) +
+	  cell2( i-1, j+1 ) + cell2( i, j+1 ) + cell2( i+1, j+1 );
+      }
+    }
 }
 
 
@@ -214,32 +261,24 @@ int main(int argc, char* argv[]){
     }
     
     // creation de la table des voisins
-    int neighbors[4];
+    int neighbors[8];
     create_neighbors(neighbors, grid_comm, comm_rank);
     
     // Type pour l'échange de colonnes
     MPI_Datatype block_column;
-    MPI_Type_vector(loc_BS+2, 1, loc_BS+2, MPI_INT, &block_column);
+    MPI_Type_vector(loc_BS, 1, loc_BS+2, MPI_INT, &block_column);
     MPI_Type_commit(&block_column);
-
+    
+    MPI_Status st;
+    MPI_Request rq[8];
     // début de l'exécution des boucles
     for(loop=0; loop<maxloop; loop++){
       // communacations
-      do_communications(neighbors, loc_BS, grid_comm, loc_A_neigh, loc_BS+2, block_column, comm_rank);
+      do_communications(rq, neighbors, loc_BS, grid_comm, loc_A_neigh, loc_BS+2, block_column, comm_rank);
 
-      //Compte le nombre de voisins de la cellule [i,j]
-      for (int j = 1; j <= loc_BS; j++) {
-	for (int i = 1; i <= loc_BS; i++) {
-	  /*printf("+--ngb(i, j) = nbng[%d]--+\n", ldnbngb*(j-1)+(i-1));
-	  printf("cell2(i-1, j-1) = loc_A_neigh[%d]\n", (loc_BS + 2)*(j-1)+(i-1));
-	  printf("cell2(i, j-1) = loc_A_neigh[%d]\n", (loc_BS + 2)*(j-1)+(i));
-	  printf("cell2(i+1, j-1) = loc_A_neigh[%d]\n", (loc_BS + 2)*(j-1)+(i+1));
-	  printf("cell2(i-1, j) = loc_A_neigh[%d]\n", (loc_BS + 2)*(j)+(i-1));
-	  printf("cell2(i+1, j) = loc_A_neigh[%d]\n", (loc_BS + 2)*(j)+(i+1));
-	  printf("cell2(i-1, j+1) = loc_A_neigh[%d]\n", (loc_BS + 2)*(j+1)+(i-1));
-	  printf("cell2(i, j+1) = loc_A_neigh[%d]\n", (loc_BS + 2)*(j+1)+(i));
-	  printf("cell2(i+1, j+1) = loc_A_neigh[%d]\n", (loc_BS + 2)*(j+1)+(i+1));
-	  printf("+-------------------------+\n");*/
+      //Compte le nombre de voisins de la cellule [i,j] -> cellules interieures
+      for (int j = 2; j <= loc_BS-1; j++) {
+	for (int i = 2; i <= loc_BS-1; i++) {
 	  ngb( i, j ) =
 	    cell2( i-1, j-1 ) + cell2( i, j-1 ) + cell2( i+1, j-1 ) +
 	    cell2( i-1, j ) + cell2( i+1, j ) +
@@ -247,6 +286,24 @@ int main(int argc, char* argv[]){
 	}
       }
       
+      //Compte le nombre de voisins pour les cellules sur les bords
+      //Colonne gauche
+      MPI_Wait(&rq[2], &st);
+      MPI_Wait(&rq[4], &st);
+      MPI_Wait(&rq[5], &st);
+      calc_ngb(1, COLUMN, loc_BS, loc_A_neigh, loc_BS+2, nbngb, ldnbngb);
+      //Ligne du haut
+      MPI_Wait(&rq[1], &st);
+      MPI_Wait(&rq[7], &st);
+      calc_ngb(1, LINE, loc_BS, loc_A_neigh, loc_BS+2, nbngb, ldnbngb);
+      //Colonne droite
+      MPI_Wait(&rq[3], &st);
+      MPI_Wait(&rq[6], &st);
+      calc_ngb(loc_BS, COLUMN, loc_BS, loc_A_neigh, loc_BS+2, nbngb, ldnbngb);
+      //Ligne du bas
+      MPI_Wait(&rq[0], &st);
+      calc_ngb(loc_BS, LINE, loc_BS, loc_A_neigh, loc_BS+2, nbngb, ldnbngb);
+
       //Règle pour la vie des cellules
       num_alive = 0;
       for (int j = 1; j <= loc_BS; j++) {
@@ -288,7 +345,7 @@ int main(int argc, char* argv[]){
     
     if(comm_rank ==0){
       // affichage de la grille finale
-      /* printf("+-----------------------+\n");
+      /*printf("+-----------------------+\n");
       for(int i=1; i<=BS; i++){
 	  for(int j=1; j<=BS; j++){
 	    printf("%d ", cell(i, j));

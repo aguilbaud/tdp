@@ -3,7 +3,7 @@ MPICC=mpicc
 CFLAGS=-g -std=gnu99 -Wall
 LDFLAGS=-fopenmp -lpthread -lm
 
-all: sequential openmp pthread mpi_sync
+all: sequential openmp pthread mpi_sync mpi_async
 
 
 driver: sequential
@@ -22,5 +22,8 @@ pthread: life_pthread.c
 mpi_sync: life_mpi_sync.c
 	$(MPICC) $(CFLAGS) -o life_mpi_sync life_mpi_sync.c $(LDFLAGS)
 
+mpi_async: life_mpi_async.c
+	$(MPICC) $(CFLAGS) -o life_mpi_async life_mpi_async.c $(LDFLAGS)
+
 clean:
-	rm life_seq life_omp life_pthread life_mpi_sync driver 2> /dev/null
+	rm life_seq life_omp life_pthread life_mpi_sync life_mpi_async driver 2> /dev/null
